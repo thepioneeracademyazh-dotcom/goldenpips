@@ -70,9 +70,12 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background">
-      {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 gradient-bg-premium">
+      {/* Background accents */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary/5 rounded-full blur-[100px]" />
+      </div>
 
       <div className="w-full max-w-sm space-y-8 relative">
         {/* Logo */}

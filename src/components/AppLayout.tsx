@@ -8,7 +8,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, showNav = true }: AppLayoutProps) {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen gradient-bg-premium flex flex-col">
       <main className={showNav ? 'flex-1 pb-20' : 'flex-1'}>
         {children}
       </main>
