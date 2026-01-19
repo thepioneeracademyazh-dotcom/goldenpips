@@ -58,23 +58,24 @@
   }
 
   .dark {
-    --background: 220 20% 8%;
-    --foreground: 45 20% 95%;
+    /* Light cream/warm gradient background */
+    --background: 40 30% 96%;
+    --foreground: 220 20% 15%;
 
-    --card: 220 18% 10%;
-    --card-foreground: 45 20% 95%;
+    --card: 40 25% 98%;
+    --card-foreground: 220 20% 15%;
 
-    --popover: 220 18% 12%;
-    --popover-foreground: 45 20% 95%;
+    --popover: 40 25% 99%;
+    --popover-foreground: 220 20% 15%;
 
     --primary: 45 93% 47%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 220 15% 15%;
-    --secondary-foreground: 45 20% 95%;
+    --secondary: 40 20% 92%;
+    --secondary-foreground: 220 20% 15%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 45 10% 60%;
+    --muted: 40 15% 90%;
+    --muted-foreground: 220 10% 40%;
 
     --accent: 45 100% 51%;
     --accent-foreground: 0 0% 0%;
@@ -82,33 +83,33 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 42%;
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 15%;
+    --border: 40 20% 85%;
+    --input: 40 20% 90%;
     --ring: 45 93% 47%;
 
-    /* Custom gold shades - dark mode */
+    /* Custom gold shades */
     --gold: 45 93% 47%;
     --gold-light: 45 93% 55%;
     --gold-dark: 45 93% 38%;
-    --gold-muted: 45 40% 40%;
+    --gold-muted: 45 40% 50%;
 
-    /* Trading colors - dark mode */
-    --buy: 142 76% 45%;
+    /* Trading colors */
+    --buy: 142 76% 36%;
     --sell: 0 84% 55%;
 
-    --sidebar-background: 220 18% 10%;
-    --sidebar-foreground: 45 20% 95%;
+    --sidebar-background: 40 25% 97%;
+    --sidebar-foreground: 220 20% 15%;
     --sidebar-primary: 45 93% 47%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 220 15% 15%;
-    --sidebar-accent-foreground: 45 20% 95%;
-    --sidebar-border: 220 15% 18%;
+    --sidebar-accent: 40 20% 92%;
+    --sidebar-accent-foreground: 220 20% 15%;
+    --sidebar-border: 40 20% 85%;
     --sidebar-ring: 45 93% 47%;
   }
 }
@@ -158,14 +159,14 @@
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, hsl(220 20% 8%) 0%, hsl(230 25% 6%) 50%, hsl(220 20% 10%) 100%);
+    background: linear-gradient(135deg, hsl(40 35% 97%) 0%, hsl(45 30% 94%) 50%, hsl(40 25% 96%) 100%);
   }
 
   .gradient-bg-premium {
     background: 
-      radial-gradient(ellipse at top right, hsl(45 93% 47% / 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at bottom left, hsl(45 93% 47% / 0.05) 0%, transparent 50%),
-      linear-gradient(180deg, hsl(220 20% 8%) 0%, hsl(230 25% 5%) 100%);
+      radial-gradient(ellipse at top right, hsl(45 93% 47% / 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom left, hsl(45 80% 60% / 0.08) 0%, transparent 50%),
+      linear-gradient(180deg, hsl(40 35% 98%) 0%, hsl(45 25% 94%) 100%);
   }
 
   .safe-area-bottom {
@@ -177,23 +178,23 @@
   }
 }
 
-/* Custom scrollbar for dark theme */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(240 10% 8%);
+  background: hsl(40 20% 92%);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--gold) / 0.3);
+  background: hsl(var(--gold) / 0.4);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--gold) / 0.5);
+  background: hsl(var(--gold) / 0.6);
 }
 
 /* Animations */
