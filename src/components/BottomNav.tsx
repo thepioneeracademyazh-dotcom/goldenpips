@@ -41,10 +41,10 @@ export function BottomNav() {
                 'p-1.5 rounded-xl transition-all duration-200',
                 isActive && 'bg-primary/10 glow-gold-sm'
               )}>
-                <Icon className={cn('w-5 h-5', isActive && 'animate-pulse-gold')} />
+                <Icon className={cn('w-6 h-6 stroke-[2.5]', isActive && 'animate-pulse-gold')} />
               </div>
               <span className={cn(
-                'text-[10px] font-medium mt-0.5',
+                'text-[11px] font-bold mt-0.5',
                 isActive && 'text-primary'
               )}>
                 {item.label}
