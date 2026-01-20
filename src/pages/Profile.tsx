@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Crown, LogOut, ChevronRight, Bell, Shield, Loader2 } from 'lucide-react';
+import { User, Mail, Crown, LogOut, ChevronRight, Bell, Shield, Loader2, HelpCircle, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { InstallButton } from '@/components/InstallPWA';
 
 export default function ProfilePage() {
   const { user, signOut, refreshUserData } = useAuth();
@@ -181,6 +182,46 @@ export default function ProfilePage() {
               </div>
               <Switch defaultChecked />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Links */}
+        <Card className="card-trading">
+          <CardContent className="p-4 space-y-1">
+            <h3 className="font-semibold text-foreground mb-3">More</h3>
+            
+            <div 
+              className="flex items-center justify-between py-3 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
+              onClick={() => navigate('/help')}
+            >
+              <div className="flex items-center gap-3">
+                <HelpCircle className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Help Center</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+            
+            <div 
+              className="flex items-center justify-between py-3 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
+              onClick={() => navigate('/privacy')}
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Privacy Policy</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Install App */}
+        <Card className="card-trading">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-foreground mb-3">Install App</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Install GoldenPips on your device for the best experience
+            </p>
+            <InstallButton />
           </CardContent>
         </Card>
 
