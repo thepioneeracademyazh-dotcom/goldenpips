@@ -4,13 +4,10 @@ import { TrendingUp, Crown, ArrowRight, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
-import { Logo } from '@/components/Logo';
 import { SignalCard } from '@/components/SignalCard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { NotificationBell } from '@/components/NotificationBell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Signal } from '@/types';
 import { format } from 'date-fns';
 
@@ -80,35 +77,7 @@ export default function HomePage() {
 
   return (
     <AppLayout>
-      <div className="p-4 space-y-6 safe-area-top">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Logo size="md" />
-          <div className="flex items-center gap-2">
-            {user && <NotificationBell />}
-            {user ? (
-              <Badge 
-                variant="outline" 
-                className={user.isPremium 
-                  ? 'bg-primary/20 text-primary border-primary/30' 
-                  : 'bg-muted text-muted-foreground'
-                }
-              >
-                {user.isPremium ? '👑 Premium' : 'Free'}
-              </Badge>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/auth')}
-                className="border-primary/30 text-primary hover:bg-primary/10"
-              >
-                Sign In
-              </Button>
-            )}
-          </div>
-        </div>
-
+      <div className="p-4 space-y-6">
         {/* Welcome Card */}
         <Card className="card-trading p-5 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />

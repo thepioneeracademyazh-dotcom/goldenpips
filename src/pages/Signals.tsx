@@ -57,14 +57,10 @@ export default function SignalsPage() {
   const closedCount = signals.filter(s => s.status !== 'active').length;
 
   return (
-    <AppLayout>
-      <div className="p-4 space-y-4 safe-area-top">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Signals</h1>
-            <p className="text-sm text-muted-foreground">Last 30 days</p>
-          </div>
+    <AppLayout showLogo={false} headerTitle="Signals" headerSubtitle="Last 30 days">
+      <div className="p-4 space-y-4">
+        {/* Stats Badge */}
+        <div className="flex justify-end">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
             {signals.length} signals
           </Badge>

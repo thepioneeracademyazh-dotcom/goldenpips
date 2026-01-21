@@ -1,7 +1,7 @@
 import { AppLayout } from '@/components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { HelpCircle, MessageCircle, Mail, TrendingUp, Shield, CreditCard } from 'lucide-react';
+import { MessageCircle, Mail, TrendingUp, Shield, CreditCard } from 'lucide-react';
 
 const faqs = [
   {
@@ -32,18 +32,8 @@ const faqs = [
 
 export default function Help() {
   return (
-    <AppLayout>
+    <AppLayout showLogo={false} headerTitle="Help Center" headerSubtitle="Find answers to common questions">
       <div className="p-4 pb-24 max-w-lg mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-xl bg-primary/10">
-            <HelpCircle className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Help Center</h1>
-            <p className="text-sm text-muted-foreground">Find answers to common questions</p>
-          </div>
-        </div>
 
         {/* Quick Links */}
         <div className="grid grid-cols-3 gap-3 mb-6">

@@ -62,13 +62,8 @@ export default function SubscriptionPage() {
   };
 
   return (
-    <AppLayout>
-      <div className="p-4 space-y-6 safe-area-top">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground">Subscription</h1>
-          <p className="text-muted-foreground text-sm">Unlock premium trading signals</p>
-        </div>
+    <AppLayout showLogo={false} headerTitle="Subscription" headerSubtitle="Unlock premium trading signals">
+      <div className="p-4 space-y-6">
 
         {/* Current Status */}
         {user && (
