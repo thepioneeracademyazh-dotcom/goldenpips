@@ -64,13 +64,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <AppLayout>
-      <div className="p-4 space-y-6 safe-area-top">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground">Profile</h1>
-          <p className="text-muted-foreground text-sm">Manage your account</p>
-        </div>
+    <AppLayout showLogo={false} headerTitle="Profile" headerSubtitle="Manage your account">
+      <div className="p-4 space-y-6">
 
         {/* Profile Card */}
         <Card className="card-trading">

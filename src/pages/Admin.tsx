@@ -279,15 +279,8 @@ export default function AdminPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="p-4 space-y-6 safe-area-top">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
-            <p className="text-muted-foreground text-sm">Manage signals & users</p>
-          </div>
-        </div>
+    <AppLayout showLogo={false} headerTitle="Admin Panel" headerSubtitle="Manage signals & users">
+      <div className="p-4 space-y-6">
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
