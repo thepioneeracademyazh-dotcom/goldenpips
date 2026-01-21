@@ -17,7 +17,7 @@ export function AppHeader({ showLogo = true, title, subtitle }: AppHeaderProps) 
 
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border safe-area-top">
-      <div className="flex items-center justify-between h-14 px-4">
+      <div className="flex items-center justify-between h-16 px-4">
         {/* Left: Logo or Title */}
         <div className="flex items-center gap-2">
           {showLogo ? (

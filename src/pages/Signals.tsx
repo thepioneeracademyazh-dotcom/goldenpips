@@ -59,7 +59,7 @@ export default function SignalsPage() {
   return (
     <AppLayout showLogo={false} headerTitle="Signals" headerSubtitle="Last 30 days">
       {/* Sticky Filter Section */}
-      <div className="sticky top-14 z-30 bg-background/95 backdrop-blur-xl border-b border-border px-4 py-3 space-y-3">
+      <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-xl border-b border-border px-4 py-3 space-y-3">
         {/* Stats Badge */}
         <div className="flex justify-end">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
