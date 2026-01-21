@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Crown, LogOut, ChevronRight, Bell, Shield, Loader2, HelpCircle, FileText } from 'lucide-react';
+import { User, Mail, Crown, LogOut, ChevronRight, Bell, Shield, Loader2, HelpCircle, FileText, Share2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -55,6 +55,27 @@ export default function ProfilePage() {
       toast.error('Failed to log out');
     } finally {
       setLoggingOut(false);
+    }
+  };
+
+  const handleShareApp = async () => {
+    const shareData = {
+      title: 'GoldenPips',
+      text: 'Check out GoldenPips - Premium trading signals for forex traders!',
+      url: window.location.origin
+    };
+
+    try {
+      if (navigator.share && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.origin);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        toast.error('Failed to share');
+      }
     }
   };
 
@@ -209,14 +230,26 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Install App */}
+        {/* Share & Install App */}
         <Card className="card-trading">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-foreground mb-3">Install App</h3>
-            <p className="text-xs text-muted-foreground mb-3">
-              Install GoldenPips on your device for the best experience
-            </p>
-            <InstallButton />
+          <CardContent className="p-4 space-y-4">
+            <div>
+              <h3 className="font-semibold text-foreground mb-2">Share App</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Share GoldenPips with friends and family
+              </p>
+              <Button onClick={handleShareApp} variant="outline" className="w-full">
+                <Share2 className="w-4 h-4 mr-2" />
+                Share GoldenPips
+              </Button>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground mb-2">Install App</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Install on your device for the best experience
+              </p>
+              <InstallButton />
+            </div>
           </CardContent>
         </Card>
 

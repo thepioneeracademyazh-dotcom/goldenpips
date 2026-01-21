@@ -87,7 +87,7 @@ export default function SignalsPage() {
             variant={typeFilter === 'all' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setTypeFilter('all')}
-            className={typeFilter === 'all' ? 'gradient-gold text-primary-foreground' : ''}
+            className={typeFilter === 'all' ? 'gradient-gold text-primary-foreground' : 'bg-muted/50 border-border text-foreground hover:bg-muted'}
           >
             All Types
           </Button>
@@ -95,7 +95,7 @@ export default function SignalsPage() {
             variant={typeFilter === 'buy' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setTypeFilter('buy')}
-            className={typeFilter === 'buy' ? 'bg-buy hover:bg-buy/90 text-white' : 'border-buy/30 text-buy'}
+            className={typeFilter === 'buy' ? 'bg-buy hover:bg-buy/90 text-white' : 'bg-muted/50 border-buy/50 text-foreground hover:bg-buy/20'}
           >
             Buy Only
           </Button>
@@ -103,7 +103,7 @@ export default function SignalsPage() {
             variant={typeFilter === 'sell' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setTypeFilter('sell')}
-            className={typeFilter === 'sell' ? 'bg-sell hover:bg-sell/90 text-white' : 'border-sell/30 text-sell'}
+            className={typeFilter === 'sell' ? 'bg-sell hover:bg-sell/90 text-white' : 'bg-muted/50 border-sell/50 text-foreground hover:bg-sell/20'}
           >
             Sell Only
           </Button>
