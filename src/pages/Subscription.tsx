@@ -22,7 +22,7 @@ export default function SubscriptionPage() {
   const [loading, setLoading] = useState(false);
 
   const isFirstTimeUser = user?.subscription?.is_first_time_user ?? true;
-  const price = isFirstTimeUser ? 1 : 49;
+  const price = isFirstTimeUser ? 25 : 49;
   const isPremium = user?.isPremium;
   const expiresAt = user?.subscription?.expires_at;
 
