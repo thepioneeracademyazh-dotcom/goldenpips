@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Plus, Users, TrendingUp, Bell, Edit, Trash2, Save, X, Loader2, Crown, User } from 'lucide-react';
+import { Plus, Users, TrendingUp, Bell, Edit, Trash2, Save, Loader2, Crown, User, Ban, CheckCircle, UserX } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +12,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { SignalCard } from '@/components/SignalCard';
 import { toast } from 'sonner';
-import { Signal, SignalType, SignalStatus, Profile, Subscription } from '@/types';
+import { Signal, SignalType, SignalStatus, Profile, Subscription, Notification } from '@/types';
 import { format } from 'date-fns';
 
 interface UserWithSub {
@@ -28,9 +30,11 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [signals, setSignals] = useState<Signal[]>([]);
   const [users, setUsers] = useState<UserWithSub[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showSignalDialog, setShowSignalDialog] = useState(false);
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
   const [editingSignal, setEditingSignal] = useState<Signal | null>(null);
+  const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Signal form state
@@ -47,6 +51,7 @@ export default function AdminPage() {
   const [notificationForm, setNotificationForm] = useState({
     title: '',
     body: '',
+    target_audience: 'premium',
   });
 
   useEffect(() => {
@@ -82,6 +87,16 @@ export default function AdminPage() {
         .select('*');
 
       if (subsError) throw subsError;
+
+      // Fetch notifications
+      const { data: notificationsData, error: notificationsError } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (notificationsError) throw notificationsError;
+      setNotifications(notificationsData as Notification[]);
 
       // Combine profiles with subscriptions
       const usersWithSubs = (profilesData as Profile[]).map(profile => ({
@@ -182,7 +197,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleSendNotification = async () => {
+  const handleSaveNotification = async () => {
     if (!notificationForm.title || !notificationForm.body) {
       toast.error('Please fill in title and message');
       return;
@@ -190,27 +205,56 @@ export default function AdminPage() {
 
     setSaving(true);
     try {
-      // Save notification record
-      const { error } = await supabase
-        .from('notifications')
-        .insert({
-          title: notificationForm.title,
-          body: notificationForm.body,
-          target_audience: 'premium',
-          sent_by: user!.id,
-        });
+      if (editingNotification) {
+        const { error } = await supabase
+          .from('notifications')
+          .update({
+            title: notificationForm.title,
+            body: notificationForm.body,
+            target_audience: notificationForm.target_audience,
+          })
+          .eq('id', editingNotification.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success('Notification updated!');
+      } else {
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            title: notificationForm.title,
+            body: notificationForm.body,
+            target_audience: notificationForm.target_audience,
+            sent_by: user!.id,
+          });
 
-      // TODO: Trigger actual FCM push notification via edge function
-      toast.success('Notification sent to premium users!');
+        if (error) throw error;
+        toast.success('Notification sent!');
+      }
+
       setShowNotificationDialog(false);
-      setNotificationForm({ title: '', body: '' });
+      resetNotificationForm();
+      fetchData();
     } catch (error) {
-      console.error('Error sending notification:', error);
-      toast.error('Failed to send notification');
+      console.error('Error saving notification:', error);
+      toast.error('Failed to save notification');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Notification deleted');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      toast.error('Failed to delete notification');
     }
   };
 
@@ -238,6 +282,46 @@ export default function AdminPage() {
     }
   };
 
+  const handleBlockUser = async (userId: string, block: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_blocked: block,
+          blocked_at: block ? new Date().toISOString() : null,
+          blocked_reason: block ? 'Blocked by admin' : null,
+        })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      toast.success(block ? 'User blocked' : 'User unblocked');
+      fetchData();
+    } catch (error) {
+      console.error('Error updating user block status:', error);
+      toast.error('Failed to update user');
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      // Delete user's subscription first
+      await supabase.from('subscriptions').delete().eq('user_id', userId);
+      
+      // Delete user's roles
+      await supabase.from('user_roles').delete().eq('user_id', userId);
+      
+      // Delete user's profile
+      const { error } = await supabase.from('profiles').delete().eq('user_id', userId);
+
+      if (error) throw error;
+      toast.success('User data deleted');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
+    }
+  };
+
   const resetSignalForm = () => {
     setSignalForm({
       signal_type: 'buy',
@@ -248,6 +332,15 @@ export default function AdminPage() {
       notes: '',
     });
     setEditingSignal(null);
+  };
+
+  const resetNotificationForm = () => {
+    setNotificationForm({
+      title: '',
+      body: '',
+      target_audience: 'premium',
+    });
+    setEditingNotification(null);
   };
 
   const openEditSignal = (signal: Signal) => {
@@ -263,10 +356,22 @@ export default function AdminPage() {
     setShowSignalDialog(true);
   };
 
+  const openEditNotification = (notification: Notification) => {
+    setNotificationForm({
+      title: notification.title,
+      body: notification.body,
+      target_audience: notification.target_audience,
+    });
+    setEditingNotification(notification);
+    setShowNotificationDialog(true);
+  };
+
   const premiumUsersCount = users.filter(u => 
     u.subscription?.status === 'premium' && 
     (!u.subscription.expires_at || new Date(u.subscription.expires_at) > new Date())
   ).length;
+
+  const blockedUsersCount = users.filter(u => u.profile.is_blocked).length;
 
   if (loading) {
     return (
@@ -283,21 +388,26 @@ export default function AdminPage() {
       <div className="p-4 space-y-6">
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-2">
           <Card className="card-trading p-3 text-center">
-            <TrendingUp className="w-5 h-5 text-primary mx-auto mb-1" />
-            <p className="text-xl font-bold text-foreground">{signals.length}</p>
-            <p className="text-xs text-muted-foreground">Signals</p>
+            <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
+            <p className="text-lg font-bold text-foreground">{signals.length}</p>
+            <p className="text-[10px] text-muted-foreground">Signals</p>
           </Card>
           <Card className="card-trading p-3 text-center">
-            <Users className="w-5 h-5 text-primary mx-auto mb-1" />
-            <p className="text-xl font-bold text-foreground">{users.length}</p>
-            <p className="text-xs text-muted-foreground">Users</p>
+            <Users className="w-4 h-4 text-primary mx-auto mb-1" />
+            <p className="text-lg font-bold text-foreground">{users.length}</p>
+            <p className="text-[10px] text-muted-foreground">Users</p>
           </Card>
           <Card className="card-trading p-3 text-center">
-            <Crown className="w-5 h-5 text-primary mx-auto mb-1" />
-            <p className="text-xl font-bold text-foreground">{premiumUsersCount}</p>
-            <p className="text-xs text-muted-foreground">Premium</p>
+            <Crown className="w-4 h-4 text-primary mx-auto mb-1" />
+            <p className="text-lg font-bold text-foreground">{premiumUsersCount}</p>
+            <p className="text-[10px] text-muted-foreground">Premium</p>
+          </Card>
+          <Card className="card-trading p-3 text-center">
+            <Ban className="w-4 h-4 text-destructive mx-auto mb-1" />
+            <p className="text-lg font-bold text-foreground">{blockedUsersCount}</p>
+            <p className="text-[10px] text-muted-foreground">Blocked</p>
           </Card>
         </div>
 
@@ -398,16 +508,19 @@ export default function AdminPage() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={showNotificationDialog} onOpenChange={setShowNotificationDialog}>
+          <Dialog open={showNotificationDialog} onOpenChange={(open) => {
+            setShowNotificationDialog(open);
+            if (!open) resetNotificationForm();
+          }}>
             <DialogTrigger asChild>
               <Button variant="outline" className="flex-1 border-primary/30">
                 <Bell className="w-4 h-4 mr-2" />
-                Send Notification
+                Notification
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-card border-border">
               <DialogHeader>
-                <DialogTitle>Send Push Notification</DialogTitle>
+                <DialogTitle>{editingNotification ? 'Edit Notification' : 'Send Notification'}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -427,16 +540,29 @@ export default function AdminPage() {
                     rows={3}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  This will be sent to all {premiumUsersCount} premium users
-                </p>
+                <div className="space-y-2">
+                  <Label>Target Audience</Label>
+                  <Select 
+                    value={notificationForm.target_audience} 
+                    onValueChange={(v) => setNotificationForm({ ...notificationForm, target_audience: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Users</SelectItem>
+                      <SelectItem value="premium">Premium Only</SelectItem>
+                      <SelectItem value="free">Free Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button 
                   className="w-full gradient-gold text-primary-foreground"
-                  onClick={handleSendNotification}
+                  onClick={handleSaveNotification}
                   disabled={saving}
                 >
                   {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Bell className="w-4 h-4 mr-2" />}
-                  Send to Premium Users
+                  {editingNotification ? 'Update Notification' : 'Send Notification'}
                 </Button>
               </div>
             </DialogContent>
@@ -448,6 +574,7 @@ export default function AdminPage() {
           <TabsList className="w-full bg-muted/50">
             <TabsTrigger value="signals" className="flex-1">Signals</TabsTrigger>
             <TabsTrigger value="users" className="flex-1">Users</TabsTrigger>
+            <TabsTrigger value="notifications" className="flex-1">Alerts</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signals" className="mt-4 space-y-4">
@@ -502,13 +629,19 @@ export default function AdminPage() {
             {users.map(({ profile, subscription }) => {
               const isPremium = subscription?.status === 'premium' && 
                 (!subscription.expires_at || new Date(subscription.expires_at) > new Date());
+              const isBlocked = profile.is_blocked;
 
               return (
-                <Card key={profile.id} className="card-trading p-4">
+                <Card key={profile.id} className={`card-trading p-4 ${isBlocked ? 'opacity-60' : ''}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${isPremium ? 'bg-primary/20' : 'bg-muted'}`}>
-                        {isPremium ? (
+                      <div className={`p-2 rounded-lg ${
+                        isBlocked ? 'bg-destructive/20' : 
+                        isPremium ? 'bg-primary/20' : 'bg-muted'
+                      }`}>
+                        {isBlocked ? (
+                          <Ban className="w-4 h-4 text-destructive" />
+                        ) : isPremium ? (
                           <Crown className="w-4 h-4 text-primary" />
                         ) : (
                           <User className="w-4 h-4 text-muted-foreground" />
@@ -529,28 +662,160 @@ export default function AdminPage() {
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
-                        className={isPremium 
-                          ? 'bg-primary/20 text-primary border-primary/30' 
-                          : 'bg-muted text-muted-foreground'
+                        className={
+                          isBlocked 
+                            ? 'bg-destructive/20 text-destructive border-destructive/30'
+                            : isPremium 
+                              ? 'bg-primary/20 text-primary border-primary/30' 
+                              : 'bg-muted text-muted-foreground'
                         }
                       >
-                        {isPremium ? 'Premium' : 'Free'}
+                        {isBlocked ? 'Blocked' : isPremium ? 'Premium' : 'Free'}
                       </Badge>
-                      {!isPremium && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="text-xs border-primary/30 text-primary"
-                          onClick={() => handleManualUpgrade(profile.user_id)}
-                        >
-                          Upgrade
-                        </Button>
-                      )}
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8 px-2">
+                            Manage
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-card border-border">
+                          {!isPremium && !isBlocked && (
+                            <DropdownMenuItem 
+                              onClick={() => handleManualUpgrade(profile.user_id)}
+                              className="cursor-pointer"
+                            >
+                              <Crown className="w-4 h-4 mr-2 text-primary" />
+                              Upgrade to Premium
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {isBlocked ? (
+                            <DropdownMenuItem 
+                              onClick={() => handleBlockUser(profile.user_id, false)}
+                              className="cursor-pointer"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2 text-success" />
+                              Unblock User
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem 
+                              onClick={() => handleBlockUser(profile.user_id, true)}
+                              className="cursor-pointer text-destructive"
+                            >
+                              <Ban className="w-4 h-4 mr-2" />
+                              Block User
+                            </DropdownMenuItem>
+                          )}
+                          
+                          <DropdownMenuSeparator />
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem 
+                                onSelect={(e) => e.preventDefault()}
+                                className="cursor-pointer text-destructive"
+                              >
+                                <UserX className="w-4 h-4 mr-2" />
+                                Delete User
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="bg-card border-border">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will delete the user's profile, subscription, and roles. 
+                                  This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeleteUser(profile.user_id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </Card>
               );
             })}
+          </TabsContent>
+
+          <TabsContent value="notifications" className="mt-4 space-y-3">
+            {notifications.length === 0 ? (
+              <Card className="card-trading p-8 text-center">
+                <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No notifications yet</p>
+              </Card>
+            ) : (
+              notifications.map(notification => (
+                <Card key={notification.id} className="card-trading p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium text-foreground text-sm truncate">
+                          {notification.title}
+                        </h4>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {notification.target_audience}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {notification.body}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {format(new Date(notification.created_at), 'MMM dd, yyyy • HH:mm')}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => openEditNotification(notification)}
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-card border-border">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Notification</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete this notification.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteNotification(notification.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
           </TabsContent>
         </Tabs>
       </div>

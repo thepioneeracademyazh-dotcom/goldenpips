@@ -3,9 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { InstallPWA } from "@/components/InstallPWA";
+import { BlockedScreen } from "@/components/BlockedScreen";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Signals from "./pages/Signals";
@@ -18,34 +20,58 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function AppContent() {
+  const { user, loading } = useAuth();
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  // Show blocked screen if user is blocked
+  if (user?.isBlocked) {
+    return <BlockedScreen />;
+  }
+
+  return (
+    <>
+      <InstallPWA />
+      <Toaster />
+      <Sonner position="top-center" />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/signals" element={
+            <ProtectedRoute><Signals /></ProtectedRoute>
+          } />
+          <Route path="/subscription" element={
+            <ProtectedRoute><Subscription /></ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute><Profile /></ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute requireAdmin><Admin /></ProtectedRoute>
+          } />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <InstallPWA />
-        <Toaster />
-        <Sonner position="top-center" />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/signals" element={
-              <ProtectedRoute><Signals /></ProtectedRoute>
-            } />
-            <Route path="/subscription" element={
-              <ProtectedRoute><Subscription /></ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute><Profile /></ProtectedRoute>
-            } />
-            <Route path="/admin" element={
-              <ProtectedRoute requireAdmin><Admin /></ProtectedRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <AppContent />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

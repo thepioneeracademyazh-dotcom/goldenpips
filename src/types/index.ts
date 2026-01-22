@@ -10,6 +10,9 @@ export interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   fcm_token: string | null;
+  is_blocked: boolean;
+  blocked_at: string | null;
+  blocked_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -80,4 +83,5 @@ export interface User {
   roles: UserRole[];
   isAdmin: boolean;
   isPremium: boolean;
+  isBlocked: boolean;
 }

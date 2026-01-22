@@ -86,31 +86,40 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          blocked_at: string | null
+          blocked_reason: string | null
           created_at: string
           email: string
           fcm_token: string | null
           full_name: string | null
           id: string
+          is_blocked: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           email: string
           fcm_token?: string | null
           full_name?: string | null
           id?: string
+          is_blocked?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           email?: string
           fcm_token?: string | null
           full_name?: string | null
           id?: string
+          is_blocked?: boolean
           updated_at?: string
           user_id?: string
         }

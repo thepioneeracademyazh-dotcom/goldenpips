@@ -49,6 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isPremium = subscription?.status === 'premium' && 
       (!subscription.expires_at || new Date(subscription.expires_at) > new Date());
 
+    // Check if user is blocked
+    const isBlocked = profile?.is_blocked || false;
+
     return {
       id: userId,
       email,
@@ -57,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       roles: (roles as UserRole[]) || [],
       isAdmin,
       isPremium,
+      isBlocked,
     };
   };
 
