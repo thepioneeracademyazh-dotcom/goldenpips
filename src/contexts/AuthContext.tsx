@@ -76,6 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    let profileSubscription: ReturnType<typeof supabase.channel> | null = null;
+
     // Set up auth state listener FIRST
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
@@ -89,9 +91,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .catch(console.error)
               .finally(() => setLoading(false));
           }, 0);
+
+          // Subscribe to profile changes (for block detection)
+          profileSubscription = supabase
+            .channel('profile-changes')
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'profiles',
+                filter: `user_id=eq.${currentSession.user.id}`,
+              },
+              (payload) => {
+                // Refresh user data when profile is updated
+                fetchUserData(currentSession.user.id, currentSession.user.email || '')
+                  .then(setUser)
+                  .catch(console.error);
+              }
+            )
+            .subscribe();
         } else {
           setUser(null);
           setLoading(false);
+          if (profileSubscription) {
+            supabase.removeChannel(profileSubscription);
+          }
         }
       }
     );
@@ -105,12 +130,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .then(setUser)
           .catch(console.error)
           .finally(() => setLoading(false));
+
+        // Subscribe to profile changes (for block detection)
+        profileSubscription = supabase
+          .channel('profile-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'profiles',
+              filter: `user_id=eq.${currentSession.user.id}`,
+            },
+            (payload) => {
+              // Refresh user data when profile is updated
+              fetchUserData(currentSession.user.id, currentSession.user.email || '')
+                .then(setUser)
+                .catch(console.error);
+            }
+          )
+          .subscribe();
       } else {
         setLoading(false);
       }
     });
 
-    return () => authSubscription.unsubscribe();
+    return () => {
+      authSubscription.unsubscribe();
+      if (profileSubscription) {
+        supabase.removeChannel(profileSubscription);
+      }
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
