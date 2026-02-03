@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Users, TrendingUp, Bell, Edit, Trash2, Save, Loader2, Crown, User, Ban, CheckCircle, UserX } from 'lucide-react';
+import { Plus, Users, TrendingUp, Bell, Edit, Trash2, Save, Loader2, Crown, User, Ban, CheckCircle, UserX, Quote } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { SignalCard } from '@/components/SignalCard';
 import { toast } from 'sonner';
-import { Signal, SignalType, SignalStatus, Profile, Subscription, Notification } from '@/types';
+import { Signal, SignalType, SignalStatus, Profile, Subscription, Notification, DailyQuote } from '@/types';
 import { format } from 'date-fns';
 
 interface UserWithSub {
@@ -31,11 +31,14 @@ export default function AdminPage() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [users, setUsers] = useState<UserWithSub[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [quotes, setQuotes] = useState<DailyQuote[]>([]);
   const [showSignalDialog, setShowSignalDialog] = useState(false);
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
+  const [showQuoteDialog, setShowQuoteDialog] = useState(false);
   const [editingSignal, setEditingSignal] = useState<Signal | null>(null);
   const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sendingPush, setSendingPush] = useState(false);
 
   // Signal form state
   const [signalForm, setSignalForm] = useState({
@@ -52,6 +55,12 @@ export default function AdminPage() {
     title: '',
     body: '',
     target_audience: 'premium',
+  });
+
+  // Quote form state
+  const [quoteForm, setQuoteForm] = useState({
+    quote: '',
+    author: '',
   });
 
   useEffect(() => {
@@ -98,6 +107,15 @@ export default function AdminPage() {
       if (notificationsError) throw notificationsError;
       setNotifications(notificationsData as Notification[]);
 
+      // Fetch quotes
+      const { data: quotesData, error: quotesError } = await supabase
+        .from('daily_quotes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (quotesError) throw quotesError;
+      setQuotes(quotesData as DailyQuote[]);
       // Combine profiles with subscriptions
       const usersWithSubs = (profilesData as Profile[]).map(profile => ({
         profile,
@@ -228,7 +246,30 @@ export default function AdminPage() {
           });
 
         if (error) throw error;
-        toast.success('Notification sent!');
+        
+        // Send push notification
+        setSendingPush(true);
+        try {
+          const { data, error: pushError } = await supabase.functions.invoke('send-notification', {
+            body: {
+              title: notificationForm.title,
+              body: notificationForm.body,
+              targetAudience: notificationForm.target_audience,
+            },
+          });
+          
+          if (pushError) {
+            console.error('Push notification error:', pushError);
+            toast.warning('Notification saved but push failed to send');
+          } else {
+            toast.success(`Notification sent to ${data?.sent || 0} devices!`);
+          }
+        } catch (pushErr) {
+          console.error('Push error:', pushErr);
+          toast.warning('Notification saved but push delivery failed');
+        } finally {
+          setSendingPush(false);
+        }
       }
 
       setShowNotificationDialog(false);
@@ -239,6 +280,51 @@ export default function AdminPage() {
       toast.error('Failed to save notification');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveQuote = async () => {
+    if (!quoteForm.quote) {
+      toast.error('Please enter a quote');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('daily_quotes')
+        .insert({
+          quote: quoteForm.quote,
+          author: quoteForm.author || null,
+          created_by: user!.id,
+        });
+
+      if (error) throw error;
+      toast.success('Quote published for 24 hours!');
+      setShowQuoteDialog(false);
+      setQuoteForm({ quote: '', author: '' });
+      fetchData();
+    } catch (error) {
+      console.error('Error saving quote:', error);
+      toast.error('Failed to save quote');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteQuote = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('daily_quotes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Quote deleted');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting quote:', error);
+      toast.error('Failed to delete quote');
     }
   };
 
@@ -569,12 +655,58 @@ export default function AdminPage() {
           </Dialog>
         </div>
 
+        {/* Quote Dialog */}
+        <Dialog open={showQuoteDialog} onOpenChange={setShowQuoteDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full border-primary/30">
+              <Quote className="w-4 h-4 mr-2" />
+              Add Daily Quote
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-card border-border">
+            <DialogHeader>
+              <DialogTitle>Add Daily Quote</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Quote</Label>
+                <Textarea
+                  value={quoteForm.quote}
+                  onChange={(e) => setQuoteForm({ ...quoteForm, quote: e.target.value })}
+                  placeholder="Enter motivational quote..."
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Author (optional)</Label>
+                <Input
+                  value={quoteForm.author}
+                  onChange={(e) => setQuoteForm({ ...quoteForm, author: e.target.value })}
+                  placeholder="Author name"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This quote will be visible for 24 hours from now.
+              </p>
+              <Button 
+                className="w-full gradient-gold text-primary-foreground"
+                onClick={handleSaveQuote}
+                disabled={saving}
+              >
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Quote className="w-4 h-4 mr-2" />}
+                Publish Quote
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Tabs */}
         <Tabs defaultValue="signals">
           <TabsList className="w-full bg-muted/50">
             <TabsTrigger value="signals" className="flex-1">Signals</TabsTrigger>
             <TabsTrigger value="users" className="flex-1">Users</TabsTrigger>
             <TabsTrigger value="notifications" className="flex-1">Alerts</TabsTrigger>
+            <TabsTrigger value="quotes" className="flex-1">Quotes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signals" className="mt-4 space-y-4">
@@ -815,6 +947,73 @@ export default function AdminPage() {
                   </div>
                 </Card>
               ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="quotes" className="mt-4 space-y-3">
+            {quotes.length === 0 ? (
+              <Card className="card-trading p-8 text-center">
+                <Quote className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No quotes yet</p>
+              </Card>
+            ) : (
+              quotes.map(quote => {
+                const isActive = new Date(quote.expires_at) > new Date();
+                return (
+                  <Card key={quote.id} className={`card-trading p-4 ${!isActive ? 'opacity-60' : ''}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge 
+                            variant="outline" 
+                            className={isActive 
+                              ? 'bg-success/20 text-success border-success/30' 
+                              : 'bg-muted text-muted-foreground'
+                            }
+                          >
+                            {isActive ? 'Active' : 'Expired'}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-foreground italic">"{quote.quote}"</p>
+                        {quote.author && (
+                          <p className="text-xs text-primary mt-1">— {quote.author}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Expires: {format(new Date(quote.expires_at), 'MMM dd, yyyy • HH:mm')}
+                        </p>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-card border-border">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Quote</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete this quote.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteQuote(quote.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </Card>
+                );
+              })
             )}
           </TabsContent>
         </Tabs>

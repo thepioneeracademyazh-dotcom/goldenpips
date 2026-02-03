@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { SignalCard } from '@/components/SignalCard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { DailyQuote } from '@/components/DailyQuote';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Signal } from '@/types';
@@ -103,6 +104,8 @@ export default function HomePage() {
           </div>
         </Card>
 
+        {/* Daily Motivational Quote */}
+        <DailyQuote />
         {/* Premium Upsell (for non-premium users) */}
         {user && !user.isPremium && (
           <Card 
