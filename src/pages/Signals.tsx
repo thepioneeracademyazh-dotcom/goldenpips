@@ -21,6 +21,34 @@ export default function SignalsPage() {
 
   useEffect(() => {
     fetchSignals();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('signals-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'signals',
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setSignals(prev => [payload.new as Signal, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setSignals(prev => 
+              prev.map(s => s.id === payload.new.id ? payload.new as Signal : s)
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setSignals(prev => prev.filter(s => s.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchSignals = async () => {
