@@ -75,6 +75,15 @@ export interface Notification {
   created_at: string;
 }
 
+export interface DailyQuote {
+  id: string;
+  quote: string;
+  author: string | null;
+  created_by: string;
+  created_at: string;
+  expires_at: string;
+}
+
 export interface User {
   id: string;
   email: string;
