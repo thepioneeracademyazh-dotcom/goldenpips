@@ -28,6 +28,7 @@ interface UserWithSub {
 export default function AdminPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('signals');
   const [signals, setSignals] = useState<Signal[]>([]);
   const [users, setUsers] = useState<UserWithSub[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -471,7 +472,8 @@ export default function AdminPage() {
 
   return (
     <AppLayout showLogo={false} headerTitle="Admin Panel" headerSubtitle="Manage signals & users">
-      <div className="p-4 space-y-6">
+      {/* Sticky Header Section */}
+      <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-xl border-b border-border px-4 pt-4 pb-3 space-y-4">
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-2">
@@ -700,16 +702,21 @@ export default function AdminPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Tabs */}
-        <Tabs defaultValue="signals">
+        {/* Tabs in sticky header */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full bg-muted/50">
             <TabsTrigger value="signals" className="flex-1">Signals</TabsTrigger>
             <TabsTrigger value="users" className="flex-1">Users</TabsTrigger>
             <TabsTrigger value="notifications" className="flex-1">Alerts</TabsTrigger>
             <TabsTrigger value="quotes" className="flex-1">Quotes</TabsTrigger>
           </TabsList>
+        </Tabs>
+      </div>
 
-          <TabsContent value="signals" className="mt-4 space-y-4">
+      {/* Scrollable Content */}
+      <div className="p-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsContent value="signals" className="mt-0 space-y-4">
             {signals.length === 0 ? (
               <Card className="card-trading p-8 text-center">
                 <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
@@ -757,7 +764,7 @@ export default function AdminPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="users" className="mt-4 space-y-3">
+          <TabsContent value="users" className="mt-0 space-y-3">
             {users.map(({ profile, subscription }) => {
               const isPremium = subscription?.status === 'premium' && 
                 (!subscription.expires_at || new Date(subscription.expires_at) > new Date());
@@ -880,7 +887,7 @@ export default function AdminPage() {
             })}
           </TabsContent>
 
-          <TabsContent value="notifications" className="mt-4 space-y-3">
+          <TabsContent value="notifications" className="mt-0 space-y-3">
             {notifications.length === 0 ? (
               <Card className="card-trading p-8 text-center">
                 <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
@@ -950,7 +957,7 @@ export default function AdminPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="quotes" className="mt-4 space-y-3">
+          <TabsContent value="quotes" className="mt-0 space-y-3">
             {quotes.length === 0 ? (
               <Card className="card-trading p-8 text-center">
                 <Quote className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
