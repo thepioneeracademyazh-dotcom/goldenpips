@@ -22,6 +22,46 @@ export default function HomePage() {
   useEffect(() => {
     fetchLatestSignal();
     fetchStats();
+
+    // Subscribe to real-time signal changes
+    const channel = supabase
+      .channel('home-signals-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'signals',
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            // New signal becomes the latest
+            setLatestSignal(payload.new as Signal);
+            fetchStats();
+          } else if (payload.eventType === 'UPDATE') {
+            // Update if it's the current latest signal
+            setLatestSignal(prev => 
+              prev?.id === payload.new.id ? payload.new as Signal : prev
+            );
+            fetchStats();
+          } else if (payload.eventType === 'DELETE') {
+            // If deleted signal was the latest, refetch
+            setLatestSignal(prev => {
+              if (prev?.id === payload.old.id) {
+                fetchLatestSignal();
+                return null;
+              }
+              return prev;
+            });
+            fetchStats();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchLatestSignal = async () => {
