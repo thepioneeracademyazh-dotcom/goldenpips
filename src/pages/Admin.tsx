@@ -849,35 +849,17 @@ export default function AdminPage() {
                           
                           <DropdownMenuSeparator />
                           
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem 
-                                onSelect={(e) => e.preventDefault()}
-                                className="cursor-pointer text-destructive"
-                              >
-                                <UserX className="w-4 h-4 mr-2" />
-                                Delete User
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-card border-border">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete User</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will delete the user's profile, subscription, and roles. 
-                                  This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleDeleteUser(profile.user_id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <DropdownMenuItem 
+                            onSelect={() => {
+                              if (confirm('This will delete the user\'s profile, subscription, and roles. This action cannot be undone. Continue?')) {
+                                handleDeleteUser(profile.user_id);
+                              }
+                            }}
+                            className="cursor-pointer text-destructive"
+                          >
+                            <UserX className="w-4 h-4 mr-2" />
+                            Delete User
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
