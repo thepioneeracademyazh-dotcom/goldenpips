@@ -333,13 +333,7 @@ export default function ProfilePage() {
                 Share GoldenPips
               </Button>
             </div>
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Install App</h3>
-              <p className="text-xs text-muted-foreground mb-3">
-                Install on your device for the best experience
-              </p>
-              <InstallButton />
-            </div>
+            <InstallButton />
           </CardContent>
         </Card>
 

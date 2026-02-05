@@ -85,13 +85,13 @@ export default function Help() {
           </CardHeader>
           <CardContent className="space-y-3">
             <a 
-              href="mailto:support@goldenpips.com" 
+              href="mailto:goldenpipsofficial1@gmail.com" 
               className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
             >
               <Mail className="w-5 h-5 text-primary" />
               <div>
                 <p className="text-sm font-medium text-foreground">Email Support</p>
-                <p className="text-xs text-muted-foreground">support@goldenpips.com</p>
+                <p className="text-xs text-muted-foreground">goldenpipsofficial1@gmail.com</p>
               </div>
             </a>
             <a 

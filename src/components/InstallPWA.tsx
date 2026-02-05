@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, X } from 'lucide-react';
 
@@ -89,9 +89,10 @@ export function InstallPWA() {
   );
 }
 
-export function InstallButton() {
+export const InstallButton = forwardRef<HTMLButtonElement>((_, ref) => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
@@ -102,10 +103,12 @@ export function InstallButton() {
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setCanInstall(true);
     };
 
     const handleAppInstalled = () => {
       setIsInstalled(true);
+      setCanInstall(false);
       setDeferredPrompt(null);
     };
 
@@ -130,28 +133,17 @@ export function InstallButton() {
     setDeferredPrompt(null);
   };
 
-  if (isInstalled) {
-    return (
-      <Button disabled variant="outline" className="w-full">
-        <Download className="w-4 h-4 mr-2" />
-        App Installed
-      </Button>
-    );
-  }
-
-  if (!deferredPrompt) {
-    return (
-      <Button disabled variant="outline" className="w-full opacity-50">
-        <Download className="w-4 h-4 mr-2" />
-        Install App
-      </Button>
-    );
+  // Don't render anything if app is installed or can't be installed
+  if (isInstalled || !canInstall) {
+    return null;
   }
 
   return (
-    <Button onClick={handleInstallClick} className="w-full">
+    <Button ref={ref} onClick={handleInstallClick} className="w-full">
       <Download className="w-4 h-4 mr-2" />
       Install App
     </Button>
   );
-}
+});
+
+InstallButton.displayName = 'InstallButton';
