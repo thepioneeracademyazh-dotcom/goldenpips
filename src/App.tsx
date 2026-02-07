@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Signals from "./pages/Signals";
 import Subscription from "./pages/Subscription";
+import PaymentHistory from "./pages/PaymentHistory";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Help from "./pages/Help";
@@ -53,6 +54,9 @@ function AppContent() {
           } />
           <Route path="/subscription" element={
             <ProtectedRoute><Subscription /></ProtectedRoute>
+          } />
+          <Route path="/payments" element={
+            <ProtectedRoute><PaymentHistory /></ProtectedRoute>
           } />
           <Route path="/profile" element={
             <ProtectedRoute><Profile /></ProtectedRoute>

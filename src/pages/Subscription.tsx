@@ -22,8 +22,7 @@ export default function SubscriptionPage() {
   const [loading, setLoading] = useState(false);
 
   const isFirstTimeUser = user?.subscription?.is_first_time_user ?? true;
-  // TODO: Revert to isFirstTimeUser ? 25 : 49 after testing
-  const price = 2; // Testing price - set to 2 USDT
+  const price = isFirstTimeUser ? 25 : 49;
   const isPremium = user?.isPremium;
   const expiresAt = user?.subscription?.expires_at;
 
