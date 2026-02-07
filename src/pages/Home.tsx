@@ -7,6 +7,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { SignalCard } from '@/components/SignalCard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { DailyQuote } from '@/components/DailyQuote';
+import { SubscriptionExpiryAlert } from '@/components/SubscriptionExpiryAlert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Signal } from '@/types';
@@ -146,6 +147,10 @@ export default function HomePage() {
 
         {/* Daily Motivational Quote */}
         <DailyQuote />
+
+        {/* Subscription Expiry Alert */}
+        <SubscriptionExpiryAlert />
+        
         {/* Premium Upsell (for non-premium users) */}
         {user && !user.isPremium && (
           <Card 

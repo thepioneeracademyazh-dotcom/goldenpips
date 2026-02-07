@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/Logo';
 import { NotificationBell } from '@/components/NotificationBell';
+import { PremiumBadgeWithDays } from '@/components/PremiumBadgeWithDays';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -34,15 +35,7 @@ export function AppHeader({ showLogo = true, title, subtitle }: AppHeaderProps) 
         <div className="flex items-center gap-2">
           {user && <NotificationBell />}
           {user ? (
-            <Badge 
-              variant="outline" 
-              className={user.isPremium 
-                ? 'bg-primary/20 text-primary border-primary/30 font-semibold' 
-                : 'bg-muted text-muted-foreground font-medium'
-              }
-            >
-              {user.isPremium ? '👑 Premium' : 'Free'}
-            </Badge>
+            <PremiumBadgeWithDays user={user} />
           ) : (
             <Button 
               variant="outline" 
