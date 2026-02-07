@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Users, TrendingUp, Bell, Edit, Trash2, Save, Loader2, Crown, User, Ban, CheckCircle, UserX, Quote } from 'lucide-react';
+import { Plus, Users, TrendingUp, Bell, Edit, Trash2, Save, Loader2, Crown, User, Ban, CheckCircle, UserX, Quote, DollarSign } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { SignalCard } from '@/components/SignalCard';
+import { RevenueStats } from '@/components/admin/RevenueStats';
 import { toast } from 'sonner';
 import { Signal, SignalType, SignalStatus, Profile, Subscription, Notification, DailyQuote } from '@/types';
 import { format } from 'date-fns';
@@ -707,6 +708,7 @@ export default function AdminPage() {
           <TabsList className="w-full bg-muted/50">
             <TabsTrigger value="signals" className="flex-1">Signals</TabsTrigger>
             <TabsTrigger value="users" className="flex-1">Users</TabsTrigger>
+            <TabsTrigger value="revenue" className="flex-1">Revenue</TabsTrigger>
             <TabsTrigger value="notifications" className="flex-1">Alerts</TabsTrigger>
             <TabsTrigger value="quotes" className="flex-1">Quotes</TabsTrigger>
           </TabsList>
@@ -867,6 +869,10 @@ export default function AdminPage() {
                 </Card>
               );
             })}
+          </TabsContent>
+
+          <TabsContent value="revenue" className="mt-0">
+            <RevenueStats />
           </TabsContent>
 
           <TabsContent value="notifications" className="mt-0 space-y-3">
