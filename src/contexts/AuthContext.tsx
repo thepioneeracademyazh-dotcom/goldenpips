@@ -2,8 +2,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, Subscription, UserRole, User } from '@/types';
+import { getFCMToken } from '@/lib/firebase';
 
-// Request notification permission and save FCM token
+// Request notification permission and save FCM token using Firebase
 async function requestNotificationPermission(userId: string) {
   try {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -11,33 +12,21 @@ async function requestNotificationPermission(userId: string) {
       return;
     }
 
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      console.log('Notification permission denied');
-      return;
-    }
-
-    // Get the service worker registration
-    const registration = await navigator.serviceWorker.ready;
+    // Get FCM token using Firebase SDK
+    const token = await getFCMToken();
     
-    // For web push, we use the Push API subscription endpoint as a pseudo-token
-    // In production, you'd use Firebase SDK, but for PWA we use PushSubscription
-    const subscription = await registration.pushManager.getSubscription();
-    
-    if (subscription) {
-      // Use the endpoint as the token identifier
-      const token = subscription.endpoint;
-      
-      // Save to profile
-      await supabase
+    if (token) {
+      // Save FCM token to profile
+      const { error } = await supabase
         .from('profiles')
         .update({ fcm_token: token })
         .eq('user_id', userId);
       
-      console.log('Push subscription saved');
-    } else {
-      // Try to subscribe (requires VAPID key in production)
-      console.log('No push subscription available - FCM requires Firebase setup');
+      if (error) {
+        console.error('Error saving FCM token:', error);
+      } else {
+        console.log('FCM token saved successfully');
+      }
     }
   } catch (error) {
     console.error('Error setting up notifications:', error);
