@@ -1,7 +1,48 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, Subscription, UserRole, User } from '@/types';
+
+// Request notification permission and save FCM token
+async function requestNotificationPermission(userId: string) {
+  try {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      console.log('Push notifications not supported');
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.log('Notification permission denied');
+      return;
+    }
+
+    // Get the service worker registration
+    const registration = await navigator.serviceWorker.ready;
+    
+    // For web push, we use the Push API subscription endpoint as a pseudo-token
+    // In production, you'd use Firebase SDK, but for PWA we use PushSubscription
+    const subscription = await registration.pushManager.getSubscription();
+    
+    if (subscription) {
+      // Use the endpoint as the token identifier
+      const token = subscription.endpoint;
+      
+      // Save to profile
+      await supabase
+        .from('profiles')
+        .update({ fcm_token: token })
+        .eq('user_id', userId);
+      
+      console.log('Push subscription saved');
+    } else {
+      // Try to subscribe (requires VAPID key in production)
+      console.log('No push subscription available - FCM requires Firebase setup');
+    }
+  } catch (error) {
+    console.error('Error setting up notifications:', error);
+  }
+}
 
 interface AuthContextType {
   user: User | null;
@@ -87,7 +128,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Defer fetching additional data with setTimeout
           setTimeout(() => {
             fetchUserData(currentSession.user.id, currentSession.user.email || '')
-              .then(setUser)
+              .then((userData) => {
+                setUser(userData);
+                // Request notification permission after login
+                requestNotificationPermission(currentSession.user.id);
+              })
               .catch(console.error)
               .finally(() => setLoading(false));
           }, 0);
