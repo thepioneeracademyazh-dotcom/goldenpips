@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 const authSchema = z.object({
@@ -23,6 +24,7 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,6 +36,11 @@ export default function AuthPage() {
   });
 
   const onSubmit = async (data: AuthFormData) => {
+    if (!acceptedTerms) {
+      toast.error('Please accept the Terms & Conditions and Privacy Policy');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -145,10 +152,33 @@ export default function AuthPage() {
                 )}
               </div>
 
+              {/* Terms & Conditions Checkbox */}
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="terms"
+                  checked={acceptedTerms}
+                  onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                  className="mt-0.5"
+                />
+                <label
+                  htmlFor="terms"
+                  className="text-xs text-muted-foreground leading-relaxed cursor-pointer"
+                >
+                  I agree to the{' '}
+                  <Link to="/terms" className="text-primary hover:underline font-medium">
+                    Terms & Conditions
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy" className="text-primary hover:underline font-medium">
+                    Privacy Policy
+                  </Link>
+                </label>
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full gradient-gold text-primary-foreground font-semibold"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !acceptedTerms}
               >
                 {isSubmitting ? (
                   <>
