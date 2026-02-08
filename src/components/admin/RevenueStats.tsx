@@ -14,6 +14,8 @@ interface PaymentRecord {
   status: string;
   created_at: string;
   payment_gateway: string;
+  user_name?: string;
+  user_email?: string;
 }
 
 interface RevenueData {
@@ -47,6 +49,16 @@ export function RevenueStats() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Fetch profiles for user info
+      const userIds = [...new Set((payments || []).map(p => p.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds);
+
+      // Map profiles to payments
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
       const now = new Date();
       const thirtyDaysAgo = subDays(now, 30);
@@ -97,6 +109,16 @@ export function RevenueStats() {
         ? totalRevenue / successfulPayments.length 
         : 0;
 
+      // Enrich payments with user info
+      const enrichedPayments = allPayments.map(p => {
+        const profile = profileMap.get(p.user_id);
+        return {
+          ...p,
+          user_name: profile?.full_name || 'Unknown',
+          user_email: profile?.email || 'N/A',
+        };
+      });
+
       setData({
         totalRevenue,
         thisMonthRevenue,
@@ -106,7 +128,7 @@ export function RevenueStats() {
         successfulTransactions: successfulPayments.length,
         pendingTransactions: pendingPayments.length,
         failedTransactions: failedPayments.length,
-        recentPayments: allPayments.slice(0, 10),
+        recentPayments: enrichedPayments.slice(0, 10),
         averageOrderValue,
         monthOverMonthGrowth,
       });
@@ -264,9 +286,15 @@ export function RevenueStats() {
             <div className="space-y-3">
               {data.recentPayments.map((payment) => (
                 <div key={payment.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">
                       ${payment.amount} {payment.currency}
+                    </p>
+                    <p className="text-xs text-foreground/80 truncate">
+                      {payment.user_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {payment.user_email}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {format(new Date(payment.created_at), 'MMM dd, yyyy • HH:mm')}
