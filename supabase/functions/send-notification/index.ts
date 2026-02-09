@@ -12,8 +12,56 @@ interface NotificationPayload {
   data?: Record<string, string>;
 }
 
+// Create a JWT for Google OAuth2 using the service account
+async function getAccessToken(serviceAccount: { client_email: string; private_key: string }): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const payload = {
+    iss: serviceAccount.client_email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  };
+
+  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const unsignedToken = `${encode(header)}.${encode(payload)}`;
+
+  // Import the private key
+  const pemContents = serviceAccount.private_key
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\n/g, '');
+  const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8',
+    binaryKey,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, new TextEncoder().encode(unsignedToken));
+  const sig = btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const jwt = `${unsignedToken}.${sig}`;
+
+  // Exchange JWT for access token
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+  });
+
+  const tokenData = await tokenRes.json();
+  if (!tokenData.access_token) {
+    console.error('Failed to get access token:', tokenData);
+    throw new Error('Failed to get Firebase access token');
+  }
+  return tokenData.access_token;
+}
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -21,15 +69,18 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const fcmServerKey = Deno.env.get('FCM_SERVER_KEY');
+    const serviceAccountJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
 
-    if (!fcmServerKey) {
-      console.error('FCM_SERVER_KEY not configured');
+    if (!serviceAccountJson) {
+      console.error('FIREBASE_SERVICE_ACCOUNT not configured');
       return new Response(
-        JSON.stringify({ error: 'FCM not configured' }),
+        JSON.stringify({ error: 'Firebase service account not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const serviceAccount = JSON.parse(serviceAccountJson);
+    const projectId = serviceAccount.project_id;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -52,7 +103,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is admin
     const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
     
     if (!isAdmin) {
@@ -67,14 +117,12 @@ Deno.serve(async (req) => {
 
     console.log('Sending notification:', { title, targetAudience });
 
-    // Get FCM tokens based on target audience
-    let query = supabase
+    // Get FCM tokens
+    const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('fcm_token, user_id')
       .not('fcm_token', 'is', null)
       .eq('is_blocked', false);
-
-    const { data: profiles, error: profilesError } = await query;
 
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError);
@@ -82,7 +130,6 @@ Deno.serve(async (req) => {
     }
 
     if (!profiles || profiles.length === 0) {
-      console.log('No users with FCM tokens found');
       return new Response(
         JSON.stringify({ success: true, sent: 0, message: 'No users with FCM tokens' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -95,7 +142,6 @@ Deno.serve(async (req) => {
     if (targetAudience === 'all') {
       targetTokens = profiles.map(p => p.fcm_token).filter(Boolean);
     } else {
-      // Get subscription status for each user
       const { data: subscriptions } = await supabase
         .from('subscriptions')
         .select('user_id, status, expires_at')
@@ -123,49 +169,57 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Send to FCM (batch of 500 max)
+    // Get OAuth2 access token using service account
+    const accessToken = await getAccessToken(serviceAccount);
+    const fcmUrl = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+
     let successCount = 0;
     let failureCount = 0;
 
-    for (let i = 0; i < targetTokens.length; i += 500) {
-      const batch = targetTokens.slice(i, i + 500);
-      
-      const fcmPayload = {
-        registration_ids: batch,
-        notification: {
-          title,
-          body,
-          icon: '/icons/icon-192x192.png',
-          badge: '/icons/icon-72x72.png',
-          click_action: '/',
-        },
-        data: data || {},
-      };
+    // Send individually using HTTP v1 API
+    for (const deviceToken of targetTokens) {
+      try {
+        const message = {
+          message: {
+            token: deviceToken,
+            notification: { title, body },
+            webpush: {
+              notification: {
+                icon: '/icons/icon-192x192.png',
+                badge: '/icons/icon-72x72.png',
+              },
+              fcm_options: { link: '/' },
+            },
+            data: data || {},
+          },
+        };
 
-      const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `key=${fcmServerKey}`,
-        },
-        body: JSON.stringify(fcmPayload),
-      });
+        const res = await fetch(fcmUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(message),
+        });
 
-      const fcmResult = await fcmResponse.json();
-      console.log('FCM Response:', fcmResult);
-
-      successCount += fcmResult.success || 0;
-      failureCount += fcmResult.failure || 0;
+        if (res.ok) {
+          successCount++;
+        } else {
+          const errBody = await res.text();
+          console.error(`FCM send failed for token ${deviceToken.substring(0, 10)}...:`, errBody);
+          failureCount++;
+        }
+      } catch (err) {
+        console.error('Error sending to device:', err);
+        failureCount++;
+      }
     }
 
     console.log(`Notification sent: ${successCount} success, ${failureCount} failures`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        sent: successCount, 
-        failed: failureCount 
-      }),
+      JSON.stringify({ success: true, sent: successCount, failed: failureCount }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
