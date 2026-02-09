@@ -88,8 +88,11 @@ export default function AuthPage() {
     }
     setResetting(true);
     try {
+      const redirectUrl = window.location.hostname === 'localhost' 
+        ? `${window.location.origin}/profile`
+        : 'https://goldenpips.online/profile';
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/profile`,
+        redirectTo: redirectUrl,
       });
       if (error) {
         toast.error(error.message);
