@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getMessaging, getToken, isSupported } from 'firebase/messaging';
+import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging';
+import { toast } from 'sonner';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBdF8k3SEdt_knE74DJXOMYco97Dw1K4Ww",
@@ -16,30 +17,51 @@ const VAPID_KEY = "BIhtctDX1GUgjP6JMIuh9yI97CzdbdrLDjgTYZKQQH85nZ1FVvyiYAsUTVlG7
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+// Set up foreground message handler
+async function setupForegroundHandler() {
+  try {
+    const supported = await isSupported();
+    if (!supported) return;
+
+    const messaging = getMessaging(app);
+    onMessage(messaging, (payload) => {
+      console.log('Foreground notification received:', payload);
+      const title = payload.notification?.title || 'GoldenPips';
+      const body = payload.notification?.body || 'New notification';
+      
+      // Show as a toast instead of raw JSON
+      toast(title, {
+        description: body,
+        duration: 6000,
+      });
+    });
+  } catch (error) {
+    console.error('Error setting up foreground handler:', error);
+  }
+}
+
+// Initialize foreground handler
+setupForegroundHandler();
+
 // Get FCM token for the current user
 export async function getFCMToken(): Promise<string | null> {
   try {
-    // Check if messaging is supported
     const supported = await isSupported();
     if (!supported) {
       console.log('Firebase Messaging is not supported in this browser');
       return null;
     }
 
-    // Request notification permission
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       console.log('Notification permission denied');
       return null;
     }
 
-    // Get messaging instance
     const messaging = getMessaging(app);
 
-    // Get service worker registration
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     
-    // Get FCM token
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration

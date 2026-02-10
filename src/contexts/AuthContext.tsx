@@ -12,11 +12,9 @@ async function requestNotificationPermission(userId: string) {
       return;
     }
 
-    // Get FCM token using Firebase SDK
     const token = await getFCMToken();
     
     if (token) {
-      // Save FCM token to profile
       const { error } = await supabase
         .from('profiles')
         .update({ fcm_token: token })
@@ -32,6 +30,13 @@ async function requestNotificationPermission(userId: string) {
     console.error('Error setting up notifications:', error);
   }
 }
+
+// Generate a unique session ID
+function generateSessionId(): string {
+  return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+const SESSION_ID_KEY = 'gp_session_id';
 
 interface AuthContextType {
   user: User | null;
@@ -51,14 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUserData = async (userId: string, email: string): Promise<User> => {
-    // Fetch profile
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('user_id', userId)
       .single();
 
-    // Fetch subscription
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('*')
@@ -67,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .limit(1)
       .single();
 
-    // Fetch roles
     const { data: roles } = await supabase
       .from('user_roles')
       .select('*')
@@ -75,11 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const isAdmin = roles?.some(r => r.role === 'admin') || false;
     
-    // Check premium status considering expiry
     const isPremium = subscription?.status === 'premium' && 
       (!subscription.expires_at || new Date(subscription.expires_at) > new Date());
 
-    // Check if user is blocked
     const isBlocked = profile?.is_blocked || false;
 
     return {
@@ -105,28 +105,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Single device enforcement: check if this session is still active
+  const checkSingleDevice = async (userId: string) => {
+    const localSessionId = localStorage.getItem(SESSION_ID_KEY);
+    if (!localSessionId) return;
+
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('active_session_id')
+        .eq('user_id', userId)
+        .single();
+
+      if (profile?.active_session_id && profile.active_session_id !== localSessionId) {
+        // Another device logged in — force sign out
+        console.log('Session invalidated by another device login');
+        localStorage.removeItem(SESSION_ID_KEY);
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+      }
+    } catch (error) {
+      console.error('Error checking single device:', error);
+    }
+  };
+
+  // Register this device as the active session
+  const registerDeviceSession = async (userId: string) => {
+    const sessionId = generateSessionId();
+    localStorage.setItem(SESSION_ID_KEY, sessionId);
+
+    try {
+      await supabase
+        .from('profiles')
+        .update({ active_session_id: sessionId })
+        .eq('user_id', userId);
+    } catch (error) {
+      console.error('Error registering device session:', error);
+    }
+  };
+
   useEffect(() => {
     let profileSubscription: ReturnType<typeof supabase.channel> | null = null;
+    let singleDeviceInterval: ReturnType<typeof setInterval> | null = null;
 
-    // Set up auth state listener FIRST
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setSession(currentSession);
         
         if (currentSession?.user) {
-          // Defer fetching additional data with setTimeout
           setTimeout(() => {
             fetchUserData(currentSession.user.id, currentSession.user.email || '')
               .then((userData) => {
                 setUser(userData);
-                // Request notification permission after login
                 requestNotificationPermission(currentSession.user.id);
               })
               .catch(console.error)
               .finally(() => setLoading(false));
           }, 0);
 
-          // Subscribe to profile changes (for block detection)
+          // Subscribe to profile changes (for block/session detection)
           profileSubscription = supabase
             .channel('profile-changes')
             .on(
@@ -137,35 +175,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 table: 'profiles',
                 filter: `user_id=eq.${currentSession.user.id}`,
               },
-              (payload) => {
-                // Refresh user data when profile is updated
+              () => {
+                // Check if session was invalidated
+                checkSingleDevice(currentSession.user.id);
+                // Refresh user data
                 fetchUserData(currentSession.user.id, currentSession.user.email || '')
                   .then(setUser)
                   .catch(console.error);
               }
             )
             .subscribe();
+
+          // Periodically check single device (every 30s)
+          singleDeviceInterval = setInterval(() => {
+            checkSingleDevice(currentSession.user.id);
+          }, 30000);
         } else {
           setUser(null);
           setLoading(false);
           if (profileSubscription) {
             supabase.removeChannel(profileSubscription);
           }
+          if (singleDeviceInterval) {
+            clearInterval(singleDeviceInterval);
+          }
         }
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       
       if (currentSession?.user) {
         fetchUserData(currentSession.user.id, currentSession.user.email || '')
-          .then(setUser)
+          .then((userData) => {
+            setUser(userData);
+            // Check single device on load
+            checkSingleDevice(currentSession.user.id);
+          })
           .catch(console.error)
           .finally(() => setLoading(false));
 
-        // Subscribe to profile changes (for block detection)
         profileSubscription = supabase
           .channel('profile-changes')
           .on(
@@ -176,8 +226,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               table: 'profiles',
               filter: `user_id=eq.${currentSession.user.id}`,
             },
-            (payload) => {
-              // Refresh user data when profile is updated
+            () => {
+              checkSingleDevice(currentSession.user.id);
               fetchUserData(currentSession.user.id, currentSession.user.email || '')
                 .then(setUser)
                 .catch(console.error);
@@ -194,18 +244,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profileSubscription) {
         supabase.removeChannel(profileSubscription);
       }
+      if (singleDeviceInterval) {
+        clearInterval(singleDeviceInterval);
+      }
     };
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: redirectUrl,
-      },
     });
 
     return { error: error as Error | null };
@@ -217,10 +265,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     });
 
+    if (!error) {
+      // Register this device as the active session
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        await registerDeviceSession(authUser.id);
+      }
+    }
+
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
+    localStorage.removeItem(SESSION_ID_KEY);
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
