@@ -112,6 +112,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_session_id: string | null
           avatar_url: string | null
           blocked_at: string | null
           blocked_reason: string | null
@@ -125,6 +126,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_session_id?: string | null
           avatar_url?: string | null
           blocked_at?: string | null
           blocked_reason?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_session_id?: string | null
           avatar_url?: string | null
           blocked_at?: string | null
           blocked_reason?: string | null
