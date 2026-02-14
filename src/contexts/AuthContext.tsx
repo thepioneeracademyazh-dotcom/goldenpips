@@ -148,105 +148,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let profileSubscription: ReturnType<typeof supabase.channel> | null = null;
     let singleDeviceInterval: ReturnType<typeof setInterval> | null = null;
+    let isInitialized = false;
+
+    const setupRealtimeAndPolling = (userId: string) => {
+      // Only set up once
+      if (profileSubscription) return;
+
+      profileSubscription = supabase
+        .channel('profile-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `user_id=eq.${userId}`,
+          },
+          () => {
+            checkSingleDevice(userId);
+            fetchUserData(userId, session?.user?.email || '')
+              .then(setUser)
+              .catch(console.error);
+          }
+        )
+        .subscribe();
+
+      singleDeviceInterval = setInterval(() => {
+        checkSingleDevice(userId);
+      }, 30000);
+    };
+
+    const cleanupRealtimeAndPolling = () => {
+      if (profileSubscription) {
+        supabase.removeChannel(profileSubscription);
+        profileSubscription = null;
+      }
+      if (singleDeviceInterval) {
+        clearInterval(singleDeviceInterval);
+        singleDeviceInterval = null;
+      }
+    };
 
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setSession(currentSession);
-        
+
         if (currentSession?.user) {
-          setTimeout(() => {
-            fetchUserData(currentSession.user.id, currentSession.user.email || '')
-              .then((userData) => {
-                setUser(userData);
-                requestNotificationPermission(currentSession.user.id);
-              })
-              .catch(console.error)
-              .finally(() => setLoading(false));
-          }, 0);
+          const userId = currentSession.user.id;
+          const email = currentSession.user.email || '';
 
-          // Subscribe to profile changes (for block/session detection)
-          profileSubscription = supabase
-            .channel('profile-changes')
-            .on(
-              'postgres_changes',
-              {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'profiles',
-                filter: `user_id=eq.${currentSession.user.id}`,
-              },
-              () => {
-                // Check if session was invalidated
-                checkSingleDevice(currentSession.user.id);
-                // Refresh user data
-                fetchUserData(currentSession.user.id, currentSession.user.email || '')
-                  .then(setUser)
-                  .catch(console.error);
+          fetchUserData(userId, email)
+            .then((userData) => {
+              setUser(userData);
+              // Only request notification permission on actual sign-in, not token refresh
+              if (event === 'SIGNED_IN' && !isInitialized) {
+                requestNotificationPermission(userId);
               }
-            )
-            .subscribe();
+              isInitialized = true;
+            })
+            .catch(console.error)
+            .finally(() => setLoading(false));
 
-          // Periodically check single device (every 30s)
-          singleDeviceInterval = setInterval(() => {
-            checkSingleDevice(currentSession.user.id);
-          }, 30000);
+          setupRealtimeAndPolling(userId);
         } else {
           setUser(null);
           setLoading(false);
-          if (profileSubscription) {
-            supabase.removeChannel(profileSubscription);
-          }
-          if (singleDeviceInterval) {
-            clearInterval(singleDeviceInterval);
-          }
+          isInitialized = false;
+          cleanupRealtimeAndPolling();
         }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      
-      if (currentSession?.user) {
-        fetchUserData(currentSession.user.id, currentSession.user.email || '')
-          .then((userData) => {
-            setUser(userData);
-            // Check single device on load
-            checkSingleDevice(currentSession.user.id);
-          })
-          .catch(console.error)
-          .finally(() => setLoading(false));
-
-        profileSubscription = supabase
-          .channel('profile-changes')
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'profiles',
-              filter: `user_id=eq.${currentSession.user.id}`,
-            },
-            () => {
-              checkSingleDevice(currentSession.user.id);
-              fetchUserData(currentSession.user.id, currentSession.user.email || '')
-                .then(setUser)
-                .catch(console.error);
-            }
-          )
-          .subscribe();
-      } else {
+      if (!currentSession?.user) {
         setLoading(false);
+        return;
       }
+
+      setSession(currentSession);
+      const userId = currentSession.user.id;
+      const email = currentSession.user.email || '';
+
+      fetchUserData(userId, email)
+        .then((userData) => {
+          setUser(userData);
+          isInitialized = true;
+          checkSingleDevice(userId);
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+
+      setupRealtimeAndPolling(userId);
     });
 
     return () => {
       authSubscription.unsubscribe();
-      if (profileSubscription) {
-        supabase.removeChannel(profileSubscription);
-      }
-      if (singleDeviceInterval) {
-        clearInterval(singleDeviceInterval);
-      }
+      cleanupRealtimeAndPolling();
     };
   }, []);
 
