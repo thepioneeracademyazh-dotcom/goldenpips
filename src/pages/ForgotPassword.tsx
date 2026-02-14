@@ -40,9 +40,15 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { data, error } = await supabase.functions.invoke('reset-password', {
+        body: { action: 'send_otp', email },
+      });
       if (error) {
-        toast.error(error.message);
+        toast.error('Something went wrong. Please try again.');
+        return;
+      }
+      if (data?.error) {
+        toast.error(data.error);
         return;
       }
       setStep('otp');
@@ -55,33 +61,11 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleVerifyOtp = async () => {
+  const handleVerifyAndReset = async () => {
     if (otpValue.length !== 6) {
       toast.error('Please enter the 6-digit OTP');
       return;
     }
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: otpValue,
-        type: 'recovery',
-      });
-      if (error) {
-        toast.error(error.message || 'Invalid OTP. Please try again.');
-        return;
-      }
-      setStep('new-password');
-      toast.success('OTP verified! Set your new password.');
-    } catch {
-      toast.error('Verification failed. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSetNewPassword = async () => {
     if (!newPassword || newPassword.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
@@ -93,13 +77,19 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      const { data, error } = await supabase.functions.invoke('reset-password', {
+        body: { action: 'verify_and_reset', email, otp: otpValue, new_password: newPassword },
+      });
       if (error) {
-        toast.error(error.message);
+        toast.error('Something went wrong. Please try again.');
+        return;
+      }
+      if (data?.error) {
+        toast.error(data.error);
         return;
       }
       toast.success('Password reset successfully!');
-      navigate('/', { replace: true });
+      navigate('/auth', { replace: true });
     } catch {
       toast.error('Failed to reset password.');
     } finally {
@@ -110,7 +100,9 @@ export default function ForgotPasswordPage() {
   const handleResendOtp = async () => {
     if (resendTimer > 0) return;
     try {
-      await supabase.auth.resetPasswordForEmail(email);
+      await supabase.functions.invoke('reset-password', {
+        body: { action: 'send_otp', email },
+      });
       startResendTimer();
       toast.success('OTP resent!');
     } catch {
@@ -132,23 +124,19 @@ export default function ForgotPasswordPage() {
 
         <Card className="card-trading border-primary/20">
           <CardHeader className="text-center pb-4">
-            {step !== 'new-password' && (
-              <button
-                onClick={() => step === 'email' ? navigate('/auth') : setStep('email')}
-                className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-            )}
+            <button
+              onClick={() => step === 'email' ? navigate('/auth') : setStep('email')}
+              className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
             <CardTitle className="text-xl">
               {step === 'email' && 'Reset Password'}
-              {step === 'otp' && 'Enter OTP'}
-              {step === 'new-password' && 'Set New Password'}
+              {step === 'otp' && 'Reset Password'}
             </CardTitle>
             <CardDescription>
               {step === 'email' && 'Enter your email to receive a verification code'}
-              {step === 'otp' && 'Enter the 6-digit code sent to'}
-              {step === 'new-password' && 'Enter your new password'}
+              {step === 'otp' && 'Enter the 6-digit code and your new password'}
             </CardDescription>
             {step === 'otp' && (
               <p className="text-xs text-primary font-medium mt-1">{email}</p>
@@ -191,7 +179,7 @@ export default function ForgotPasswordPage() {
               </>
             )}
 
-            {/* Step 2: OTP */}
+            {/* Step 2: OTP + New Password (combined) */}
             {step === 'otp' && (
               <>
                 <div className="flex justify-center">
@@ -208,37 +196,6 @@ export default function ForgotPasswordPage() {
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
-                <Button
-                  onClick={handleVerifyOtp}
-                  disabled={isSubmitting || otpValue.length !== 6}
-                  className="w-full gradient-gold text-primary-foreground font-semibold"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    'Verify OTP'
-                  )}
-                </Button>
-                <div className="text-center">
-                  {resendTimer > 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Resend OTP in <span className="text-primary font-semibold">{resendTimer}s</span>
-                    </p>
-                  ) : (
-                    <button onClick={handleResendOtp} className="text-sm text-primary hover:underline font-medium">
-                      Resend OTP
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Step 3: New Password */}
-            {step === 'new-password' && (
-              <>
                 <div className="space-y-2">
                   <Label htmlFor="new-password">New Password</Label>
                   <div className="relative">
@@ -268,19 +225,30 @@ export default function ForgotPasswordPage() {
                   </div>
                 </div>
                 <Button
-                  onClick={handleSetNewPassword}
-                  disabled={isSubmitting}
+                  onClick={handleVerifyAndReset}
+                  disabled={isSubmitting || otpValue.length !== 6}
                   className="w-full gradient-gold text-primary-foreground font-semibold"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
+                      Resetting...
                     </>
                   ) : (
                     'Reset Password'
                   )}
                 </Button>
+                <div className="text-center">
+                  {resendTimer > 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Resend OTP in <span className="text-primary font-semibold">{resendTimer}s</span>
+                    </p>
+                  ) : (
+                    <button onClick={handleResendOtp} className="text-sm text-primary hover:underline font-medium">
+                      Resend OTP
+                    </button>
+                  )}
+                </div>
               </>
             )}
 
