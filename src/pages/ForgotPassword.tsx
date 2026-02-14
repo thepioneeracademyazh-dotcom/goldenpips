@@ -40,11 +40,7 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.hostname === 'localhost'
-          ? `${window.location.origin}/forgot-password`
-          : 'https://goldenpips.online/forgot-password',
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) {
         toast.error(error.message);
         return;
@@ -114,11 +110,7 @@ export default function ForgotPasswordPage() {
   const handleResendOtp = async () => {
     if (resendTimer > 0) return;
     try {
-      await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.hostname === 'localhost'
-          ? `${window.location.origin}/forgot-password`
-          : 'https://goldenpips.online/forgot-password',
-      });
+      await supabase.auth.resetPasswordForEmail(email);
       startResendTimer();
       toast.success('OTP resent!');
     } catch {
