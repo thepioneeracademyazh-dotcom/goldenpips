@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Crown, LogOut, ChevronRight, Bell, Shield, Loader2, HelpCircle, FileText, Share2, Key, Receipt } from 'lucide-react';
+import { User, Mail, Crown, LogOut, ChevronRight, Bell, Shield, Loader2, HelpCircle, FileText, Share2, Key, Receipt, Moon, Sun } from 'lucide-react';
+import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { InstallButton } from '@/components/InstallPWA';
 export default function ProfilePage() {
+  const { isDark, toggleTheme } = useTheme();
   const { user, signOut, refreshUserData } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -253,6 +255,17 @@ export default function ProfilePage() {
                 </div>
               </div>
               <Switch defaultChecked />
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-3">
+                {isDark ? <Moon className="w-5 h-5 text-muted-foreground" /> : <Sun className="w-5 h-5 text-muted-foreground" />}
+                <div>
+                  <p className="text-sm font-medium text-foreground">Dark Mode</p>
+                  <p className="text-xs text-muted-foreground">Switch to {isDark ? 'light' : 'dark'} theme</p>
+                </div>
+              </div>
+              <Switch checked={isDark} onCheckedChange={toggleTheme} />
             </div>
 
             {/* Change Password */}
