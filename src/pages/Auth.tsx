@@ -69,7 +69,9 @@ export default function AuthPage() {
             toast.error('Invalid email or password');
           } else if (error.message.includes('Email not confirmed')) {
             setPendingEmail(data.email);
-            await supabase.auth.resend({ type: 'signup', email: data.email });
+            await supabase.functions.invoke('verify-signup', {
+              body: { action: 'send_otp', email: data.email },
+            });
             setStep('otp-signup');
             startResendTimer();
             toast.info('Please verify your email first. OTP sent!');
@@ -93,6 +95,14 @@ export default function AuthPage() {
           }
           return;
         }
+        // Send custom OTP via Resend
+        const { data: otpData, error: otpError } = await supabase.functions.invoke('verify-signup', {
+          body: { action: 'send_otp', email: data.email },
+        });
+        if (otpError || otpData?.error) {
+          toast.error('Failed to send verification email. Please try again.');
+          return;
+        }
         setPendingEmail(data.email);
         setStep('otp-signup');
         startResendTimer();
@@ -113,14 +123,27 @@ export default function AuthPage() {
 
     setVerifying(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: pendingEmail,
-        token: otpValue,
-        type: 'signup',
+      const { data, error } = await supabase.functions.invoke('verify-signup', {
+        body: { action: 'verify', email: pendingEmail, otp: otpValue },
       });
 
       if (error) {
-        toast.error(error.message || 'Invalid OTP. Please try again.');
+        try {
+          const ctx = (error as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            toast.error(body.error || 'Verification failed. Please try again.');
+          } else {
+            toast.error('Verification failed. Please try again.');
+          }
+        } catch {
+          toast.error('Verification failed. Please try again.');
+        }
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
         return;
       }
 
@@ -130,11 +153,15 @@ export default function AuthPage() {
           body: { email: pendingEmail, type: 'welcome' },
         });
       } catch {
-        // Non-critical, don't block the flow
+        // Non-critical
       }
 
       toast.success('Email verified! Welcome to GoldenPips!');
-      navigate(from, { replace: true });
+      // Sign in the user after verification
+      navigate('/auth', { replace: true });
+      setStep('form');
+      setOtpValue('');
+      toast.info('Please sign in with your credentials.');
     } catch {
       toast.error('Verification failed. Please try again.');
     } finally {
@@ -145,7 +172,9 @@ export default function AuthPage() {
   const handleResendOtp = async () => {
     if (resendTimer > 0) return;
     try {
-      await supabase.auth.resend({ type: 'signup', email: pendingEmail });
+      await supabase.functions.invoke('verify-signup', {
+        body: { action: 'send_otp', email: pendingEmail },
+      });
       startResendTimer();
       toast.success('OTP resent!');
     } catch {
