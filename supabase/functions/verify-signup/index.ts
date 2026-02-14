@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, email, otp } = await req.json();
+    const { action, email, otp, fullName } = await req.json();
 
     if (action === 'send_otp') {
       if (!email) {
@@ -140,7 +140,9 @@ Deno.serve(async (req) => {
       // Ensure profile, subscription, and role exist (handles re-registration after admin delete)
       const { data: existingProfile } = await supabase.from('profiles').select('id').eq('user_id', user.id).maybeSingle();
       if (!existingProfile) {
-        await supabase.from('profiles').insert({ user_id: user.id, email: email.toLowerCase() });
+        await supabase.from('profiles').insert({ user_id: user.id, email: email.toLowerCase(), full_name: fullName || null });
+      } else if (fullName) {
+        await supabase.from('profiles').update({ full_name: fullName }).eq('user_id', user.id);
       }
 
       const { data: existingSub } = await supabase.from('subscriptions').select('id').eq('user_id', user.id).maybeSingle();

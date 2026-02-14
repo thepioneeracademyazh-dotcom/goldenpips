@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Loader2, UserRound } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Logo } from '@/components/Logo';
@@ -15,12 +15,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { toast } from 'sonner';
 
-const authSchema = z.object({
+const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-type AuthFormData = z.infer<typeof authSchema>;
+const signupSchema = z.object({
+  email: z.string().email('Please enter a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+type SignupFormData = z.infer<typeof signupSchema>;
 
 type AuthStep = 'form' | 'otp-signup';
 
@@ -35,6 +42,7 @@ export default function AuthPage() {
   const [otpValue, setOtpValue] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
+  const [pendingName, setPendingName] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -42,8 +50,12 @@ export default function AuthPage() {
 
   const from = location.state?.from?.pathname || '/';
 
-  const { register, handleSubmit, formState: { errors } } = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema),
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const signupForm = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
   });
 
   useEffect(() => {
@@ -54,65 +66,74 @@ export default function AuthPage() {
 
   const startResendTimer = useCallback(() => setResendTimer(RESEND_COOLDOWN), []);
 
-  const onSubmit = async (data: AuthFormData) => {
+  const onLoginSubmit = async (data: LoginFormData) => {
     if (!acceptedTerms) {
       toast.error('Please accept the Terms & Conditions and Privacy Policy');
       return;
     }
-
     setIsSubmitting(true);
     try {
-      if (isLogin) {
-        const { error } = await signIn(data.email, data.password);
-        if (error) {
-          if (error.message.includes('Invalid login')) {
-            toast.error('Invalid email or password');
-          } else if (error.message.includes('Email not confirmed')) {
-            setPendingEmail(data.email);
-            await supabase.functions.invoke('verify-signup', {
-              body: { action: 'send_otp', email: data.email },
-            });
-            setStep('otp-signup');
-            startResendTimer();
-            toast.info('Please verify your email first. OTP sent!');
-          } else {
-            toast.error(error.message);
-          }
-          return;
+      const { error } = await signIn(data.email, data.password);
+      if (error) {
+        if (error.message.includes('Invalid login')) {
+          toast.error('Invalid email or password');
+        } else if (error.message.includes('Email not confirmed')) {
+          setPendingEmail(data.email);
+          await supabase.functions.invoke('verify-signup', {
+            body: { action: 'send_otp', email: data.email },
+          });
+          setStep('otp-signup');
+          startResendTimer();
+          toast.info('Please verify your email first. OTP sent!');
+        } else {
+          toast.error(error.message);
         }
-        toast.success('Welcome back!');
-        navigate(from, { replace: true });
-      } else {
-        const { data: signUpData, error } = await supabase.auth.signUp({
-          email: data.email,
-          password: data.password,
-        });
-        if (error) {
-          if (error.message.includes('already registered')) {
-            toast.error('This email is already registered. Please sign in.');
-          } else {
-            toast.error(error.message);
-          }
-          return;
-        }
-        // Supabase returns a fake user with no identities for repeated signups
-        if (signUpData?.user && (!signUpData.user.identities || signUpData.user.identities.length === 0)) {
-          toast.error('This email is already registered. Please sign in.');
-          return;
-        }
-        // Send custom OTP via Resend
-        const { data: otpData, error: otpError } = await supabase.functions.invoke('verify-signup', {
-          body: { action: 'send_otp', email: data.email },
-        });
-        if (otpError || otpData?.error) {
-          toast.error('Failed to send verification email. Please try again.');
-          return;
-        }
-        setPendingEmail(data.email);
-        setStep('otp-signup');
-        startResendTimer();
-        toast.success('OTP sent to your email!');
+        return;
       }
+      toast.success('Welcome back!');
+      navigate(from, { replace: true });
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const onSignupSubmit = async (data: SignupFormData) => {
+    if (!acceptedTerms) {
+      toast.error('Please accept the Terms & Conditions and Privacy Policy');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const { data: signUpData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+      if (error) {
+        if (error.message.includes('already registered')) {
+          toast.error('This email is already registered. Please sign in.');
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+      if (signUpData?.user && (!signUpData.user.identities || signUpData.user.identities.length === 0)) {
+        toast.error('This email is already registered. Please sign in.');
+        return;
+      }
+      const { data: otpData, error: otpError } = await supabase.functions.invoke('verify-signup', {
+        body: { action: 'send_otp', email: data.email },
+      });
+      if (otpError || otpData?.error) {
+        toast.error('Failed to send verification email. Please try again.');
+        return;
+      }
+      setPendingEmail(data.email);
+      setPendingName(data.fullName);
+      setStep('otp-signup');
+      startResendTimer();
+      toast.success('OTP sent to your email!');
     } catch {
       toast.error('Something went wrong. Please try again.');
     } finally {
@@ -129,7 +150,7 @@ export default function AuthPage() {
     setVerifying(true);
     try {
       const { data, error } = await supabase.functions.invoke('verify-signup', {
-        body: { action: 'verify', email: pendingEmail, otp: otpValue },
+        body: { action: 'verify', email: pendingEmail, otp: otpValue, fullName: pendingName },
       });
 
       if (error) {
@@ -278,55 +299,108 @@ export default function AuthPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="email" type="email" placeholder="you@example.com" className="pl-10" {...register('email')} />
+                {isLogin ? (
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input id="email" type="email" placeholder="you@example.com" className="pl-10" {...loginForm.register('email')} />
+                      </div>
+                      {loginForm.formState.errors.email && <p className="text-destructive text-xs">{loginForm.formState.errors.email.message}</p>}
                     </div>
-                    {errors.email && <p className="text-destructive text-xs">{errors.email.message}</p>}
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10" {...register('password')} />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10" {...loginForm.register('password')} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {loginForm.formState.errors.password && <p className="text-destructive text-xs">{loginForm.formState.errors.password.message}</p>}
                     </div>
-                    {errors.password && <p className="text-destructive text-xs">{errors.password.message}</p>}
-                  </div>
 
-                  <div className="flex items-start space-x-2">
-                    <Checkbox id="terms" checked={acceptedTerms} onCheckedChange={(checked) => setAcceptedTerms(checked === true)} className="mt-0.5" />
-                    <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                      I agree to the{' '}
-                      <Link to="/terms" className="text-primary hover:underline font-medium">Terms & Conditions</Link>{' '}
-                      and{' '}
-                      <Link to="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</Link>
-                    </label>
-                  </div>
+                    <div className="flex items-start space-x-2">
+                      <Checkbox id="terms" checked={acceptedTerms} onCheckedChange={(checked) => setAcceptedTerms(checked === true)} className="mt-0.5" />
+                      <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                        I agree to the{' '}
+                        <Link to="/terms" className="text-primary hover:underline font-medium">Terms & Conditions</Link>{' '}
+                        and{' '}
+                        <Link to="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</Link>
+                      </label>
+                    </div>
 
-                  {isLogin && (
                     <Link to="/forgot-password" className="text-xs text-primary hover:underline w-full text-right block -mt-2">
                       Forgot Password?
                     </Link>
-                  )}
 
-                  <Button type="submit" className="w-full gradient-gold text-primary-foreground font-semibold" disabled={isSubmitting || !acceptedTerms}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {isLogin ? 'Signing in...' : 'Creating account...'}
-                      </>
-                    ) : (
-                      isLogin ? 'Sign In' : 'Create Account'
-                    )}
-                  </Button>
-                </form>
+                    <Button type="submit" className="w-full gradient-gold text-primary-foreground font-semibold" disabled={isSubmitting || !acceptedTerms}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Signing in...
+                        </>
+                      ) : (
+                        'Sign In'
+                      )}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <div className="relative">
+                        <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input id="fullName" type="text" placeholder="Your full name" className="pl-10" {...signupForm.register('fullName')} />
+                      </div>
+                      {signupForm.formState.errors.fullName && <p className="text-destructive text-xs">{signupForm.formState.errors.fullName.message}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input id="signup-email" type="email" placeholder="you@example.com" className="pl-10" {...signupForm.register('email')} />
+                      </div>
+                      {signupForm.formState.errors.email && <p className="text-destructive text-xs">{signupForm.formState.errors.email.message}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input id="signup-password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10" {...signupForm.register('password')} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {signupForm.formState.errors.password && <p className="text-destructive text-xs">{signupForm.formState.errors.password.message}</p>}
+                    </div>
+
+                    <div className="flex items-start space-x-2">
+                      <Checkbox id="signup-terms" checked={acceptedTerms} onCheckedChange={(checked) => setAcceptedTerms(checked === true)} className="mt-0.5" />
+                      <label htmlFor="signup-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                        I agree to the{' '}
+                        <Link to="/terms" className="text-primary hover:underline font-medium">Terms & Conditions</Link>{' '}
+                        and{' '}
+                        <Link to="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</Link>
+                      </label>
+                    </div>
+
+                    <Button type="submit" className="w-full gradient-gold text-primary-foreground font-semibold" disabled={isSubmitting || !acceptedTerms}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Creating account...
+                        </>
+                      ) : (
+                        'Create Account'
+                      )}
+                    </Button>
+                  </form>
+                )}
 
                 <div className="mt-6 text-center">
                   <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-sm text-muted-foreground hover:text-primary transition-colors">
