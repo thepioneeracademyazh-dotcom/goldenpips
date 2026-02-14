@@ -91,6 +91,34 @@ serve(async (req) => {
 
     console.log(`Successfully activated premium for user: ${userId}`);
 
+    // Send premium confirmation email (fire-and-forget)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email, full_name')
+      .eq('user_id', userId)
+      .single();
+
+    if (profile?.email) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      fetch(`${supabaseUrl}/functions/v1/send-premium-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({
+          email: profile.email,
+          fullName: profile.full_name,
+          paymentId: payment_id?.toString(),
+          amountPaid: price_amount,
+          currency: 'USDT',
+          startedAt: new Date().toISOString(),
+          expiresAt: expiresAt.toISOString(),
+        }),
+      }).catch(err => console.error('Premium email trigger failed:', err));
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
