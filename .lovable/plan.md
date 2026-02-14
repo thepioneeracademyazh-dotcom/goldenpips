@@ -1,39 +1,52 @@
 
 
-## Fix: Password Reset Sends Link Instead of OTP
+## Admin Support Tools for User Account Issues
 
-### Problem
-The `resetPasswordForEmail` function uses the hosted backend's default email template, which includes a clickable reset link. The custom template in `config.toml` only applies to local development, not the hosted environment. That's why users receive a link instead of a 6-digit OTP code.
+Currently, the admin "Manage" dropdown only offers: Upgrade to Premium, Block/Unblock, and Delete User. This plan adds the tools an admin needs to resolve common user support requests directly from the admin panel.
 
-### Solution
-Build a fully custom OTP-based password reset flow using a backend function and a dedicated database table, giving us complete control over the email content.
+### New Admin Capabilities
 
-### Changes
+1. **Reset User Password** -- Admin can set a new password for any user directly, solving "I forgot my password and can't receive emails" situations.
 
-**1. Create a `password_reset_otps` table**
-- Columns: `id`, `email`, `otp_code` (6-digit), `expires_at`, `used`, `created_at`
-- RLS: No public access (only the backend function interacts with it via service role)
+2. **View Payment History** -- Admin can see a user's payment records (amount, status, date, payment ID) to verify "I paid but didn't get access" claims.
 
-**2. Create a `reset-password` backend function**
-- Accepts two actions:
-  - `send_otp`: Generates a random 6-digit code, stores it in the table, and sends a branded "GoldenPips Trading Signals" email with just the OTP code (no link)
-  - `verify_and_reset`: Validates the OTP against the table, checks expiry, then uses the admin API to update the user's password
-- This replaces both `resetPasswordForEmail` and `verifyOtp` calls
+3. **Manual Payment Confirmation** -- Admin can mark a pending payment as completed and activate premium, solving "payment done but access not granted" cases. This combines updating the payment record status and upgrading the subscription in one action.
 
-**3. Update `src/pages/ForgotPassword.tsx`**
-- Replace `supabase.auth.resetPasswordForEmail()` with a call to the new `reset-password` function (action: `send_otp`)
-- Replace `supabase.auth.verifyOtp()` and `supabase.auth.updateUser()` with a single call to the `reset-password` function (action: `verify_and_reset`) that validates OTP and sets the new password in one step
-- The 3-step UI flow (email, OTP, new-password) stays the same
+---
 
-### Flow
+### Technical Details
 
-Step 1: User enters email -> frontend calls `reset-password` with `send_otp` -> backend generates OTP, emails it as a 6-digit code with GoldenPips branding
+#### 1. Edge Function: `admin-reset-password`
+- New backend function that accepts `{ userId, newPassword }`.
+- Validates the caller is an admin by checking JWT claims against `user_roles`.
+- Uses `supabase.auth.admin.updateUserById()` to set the new password.
+- No email sent -- the admin communicates the new password to the user directly.
 
-Step 2: User enters OTP + new password -> frontend calls `reset-password` with `verify_and_reset` -> backend checks OTP, updates password via admin API
+#### 2. Admin UI Changes (`src/pages/Admin.tsx`)
+Add three new items to the existing "Manage" dropdown menu for each user:
 
-### Why This Works
-- Complete control over email content (no link, just OTP)
-- GoldenPips branding in the email
-- No dependency on hosted email templates we can't modify
-- Secure: OTP expires in 10 minutes, single-use, validated server-side
+- **"Reset Password"** -- Opens a dialog where the admin types a new password, then calls the `admin-reset-password` edge function.
+- **"Payment History"** -- Opens a dialog showing all records from `payment_history` for that user (fetched on-demand).
+- **"Confirm Payment"** -- Visible only if the user has a pending payment. Marks the payment as completed and activates 30-day premium in one click (reuses existing `handleManualUpgrade` logic + updates `payment_history` status).
+
+#### 3. Menu Structure (Updated Dropdown)
+```
+Manage
+  - Reset Password
+  - Payment History
+  - Confirm Payment (if pending payments exist)
+  ---
+  - Upgrade to Premium (if not premium)
+  - Block / Unblock
+  ---
+  - Delete User
+```
+
+#### 4. Data Fetching
+- Payment history will be fetched on-demand when the admin clicks "Payment History" for a specific user, querying `payment_history` table filtered by `user_id`.
+- No new database tables or migrations needed -- all existing tables and RLS policies (admin has full access) already support these operations.
+
+#### 5. Files to Create/Modify
+- **Create**: `supabase/functions/admin-reset-password/index.ts`
+- **Modify**: `src/pages/Admin.tsx` (add dialogs, handlers, dropdown items)
 
