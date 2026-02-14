@@ -59,23 +59,8 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Handle push notifications (for future use)
-self.addEventListener('push', (event) => {
-  const options = {
-    body: event.data ? event.data.text() : 'New signal available!',
-    icon: 'https://goldenpips.online/icons/icon-192x192.png',
-    badge: 'https://goldenpips.online/icons/icon-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    }
-  };
-
-  event.waitUntil(
-    self.registration.showNotification('GoldenPips', options)
-  );
-});
+// Push notifications are handled by firebase-messaging-sw.js
+// Do NOT handle push events here to avoid duplicate/raw JSON notifications
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
