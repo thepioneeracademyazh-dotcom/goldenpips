@@ -1,6 +1,6 @@
 // Combined Service Worker: Caching + Firebase Messaging
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/11.8.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/11.8.1/firebase-messaging-compat.js');
 
 // ========== PWA CACHING ==========
 const CACHE_NAME = 'goldenpips-v2';
