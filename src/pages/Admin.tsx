@@ -169,7 +169,24 @@ export default function AdminPage() {
           .insert(signalData);
 
         if (error) throw error;
-        toast.success('Signal created!');
+        
+        // Auto-send push notification to all members about new signal
+        try {
+          const notifTitle = `New ${signal_type.toUpperCase()} Signal 🚀`;
+          const notifBody = `Entry: ${entry_price} | SL: ${stop_loss} | TP1: ${take_profit_1} | TP2: ${take_profit_2}`;
+          
+          await supabase.functions.invoke('send-notification', {
+            body: {
+              title: notifTitle,
+              body: notifBody,
+              targetAudience: 'all',
+            },
+          });
+        } catch (pushErr) {
+          console.error('Auto-notification failed:', pushErr);
+        }
+        
+        toast.success('Signal created & notification sent!');
       }
 
       setShowSignalDialog(false);
