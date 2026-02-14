@@ -1,32 +1,39 @@
 
 
-## Set Site URL to goldenpips.online
+## Fix: Password Reset Sends Link Instead of OTP
 
-### What needs to happen
+### Problem
+The `resetPasswordForEmail` function uses the hosted backend's default email template, which includes a clickable reset link. The custom template in `config.toml` only applies to local development, not the hosted environment. That's why users receive a link instead of a 6-digit OTP code.
 
-The backend authentication system needs its **Site URL** configured to `https://goldenpips.online`. This ensures all authentication emails (password reset, OTP, welcome) reference your custom domain instead of the default preview URL.
+### Solution
+Build a fully custom OTP-based password reset flow using a backend function and a dedicated database table, giving us complete control over the email content.
 
 ### Changes
 
-**1. Update `supabase/config.toml`**
+**1. Create a `password_reset_otps` table**
+- Columns: `id`, `email`, `otp_code` (6-digit), `expires_at`, `used`, `created_at`
+- RLS: No public access (only the backend function interacts with it via service role)
 
-Add the site URL setting to the auth configuration:
+**2. Create a `reset-password` backend function**
+- Accepts two actions:
+  - `send_otp`: Generates a random 6-digit code, stores it in the table, and sends a branded "GoldenPips Trading Signals" email with just the OTP code (no link)
+  - `verify_and_reset`: Validates the OTP against the table, checks expiry, then uses the admin API to update the user's password
+- This replaces both `resetPasswordForEmail` and `verifyOtp` calls
 
-```toml
-[auth]
-site_url = "https://goldenpips.online"
-```
+**3. Update `src/pages/ForgotPassword.tsx`**
+- Replace `supabase.auth.resetPasswordForEmail()` with a call to the new `reset-password` function (action: `send_otp`)
+- Replace `supabase.auth.verifyOtp()` and `supabase.auth.updateUser()` with a single call to the `reset-password` function (action: `verify_and_reset`) that validates OTP and sets the new password in one step
+- The 3-step UI flow (email, OTP, new-password) stays the same
 
-This tells the authentication system that your app lives at `goldenpips.online`, so any email templates using `{{ .SiteURL }}` will point to the correct domain.
+### Flow
 
-**2. Update `index.html` (optional cleanup)**
+Step 1: User enters email -> frontend calls `reset-password` with `send_otp` -> backend generates OTP, emails it as a 6-digit code with GoldenPips branding
 
-Update the Open Graph image URLs from `goldenpips.lovable.app` to `goldenpips.online` for consistency:
-- `og:image` -> `https://goldenpips.online/icons/icon-512x512.png`
-- `twitter:image` -> `https://goldenpips.online/icons/icon-512x512.png`
+Step 2: User enters OTP + new password -> frontend calls `reset-password` with `verify_and_reset` -> backend checks OTP, updates password via admin API
 
-### Technical Details
-
-- The `site_url` in `supabase/config.toml` under `[auth]` sets the base URL used by the authentication system for all email communications and redirects.
-- This is the root fix to ensure OTP emails and any future auth flows reference your production domain.
+### Why This Works
+- Complete control over email content (no link, just OTP)
+- GoldenPips branding in the email
+- No dependency on hosted email templates we can't modify
+- Secure: OTP expires in 10 minutes, single-use, validated server-side
 
