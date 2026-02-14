@@ -1,8 +1,47 @@
-// Firebase Messaging Service Worker
+// Combined Service Worker: Caching + Firebase Messaging
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
-// Initialize Firebase in the service worker
+// ========== PWA CACHING ==========
+const CACHE_NAME = 'goldenpips-v2';
+const urlsToCache = ['/', '/index.html', '/manifest.json'];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) return caches.delete(cacheName);
+        })
+      )
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith(self.location.origin)) return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
+  );
+});
+
+// ========== FIREBASE MESSAGING ==========
 firebase.initializeApp({
   apiKey: "AIzaSyBdF8k3SEdt_knE74DJXOMYco97Dw1K4Ww",
   authDomain: "golden-pips.firebaseapp.com",
@@ -15,47 +54,33 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages
+// Handle background messages - only show notification if FCM didn't auto-display
 messaging.onBackgroundMessage((payload) => {
-  console.log('Received background message:', payload);
+  console.log('Background message received:', payload);
 
-  // Only show custom notification if there's no notification payload
-  // (FCM auto-displays when notification payload is present)
-  if (payload.notification) {
-    // FCM handles display automatically for notification messages
-    return;
-  }
+  const title = payload.notification?.title || 'GoldenPips';
+  const body = payload.notification?.body || 'New notification';
 
-  const notificationTitle = payload.data?.title || 'GoldenPips';
-  const notificationOptions = {
-    body: payload.data?.body || 'New notification',
+  return self.registration.showNotification(title, {
+    body: body,
     icon: 'https://goldenpips.online/icons/icon-192x192.png',
     badge: 'https://goldenpips.online/icons/icon-72x72.png',
     vibrate: [100, 50, 100],
     data: { url: 'https://goldenpips.online' },
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  });
 });
 
-// Handle notification click
+// Handle notification click - always open goldenpips.online
 self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked:', event);
   event.notification.close();
-
-  // Navigate to the app
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Check if there's already a window open
       for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
+        if (client.url.includes('goldenpips.online') && 'focus' in client) {
           return client.focus();
         }
       }
-      // Open new window if none exists
-      if (clients.openWindow) {
-        return clients.openWindow('https://goldenpips.online');
-      }
+      return clients.openWindow('https://goldenpips.online');
     })
   );
 });
