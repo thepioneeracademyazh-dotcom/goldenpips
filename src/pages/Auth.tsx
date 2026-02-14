@@ -83,7 +83,7 @@ export default function AuthPage() {
         toast.success('Welcome back!');
         navigate(from, { replace: true });
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
         });
@@ -93,6 +93,11 @@ export default function AuthPage() {
           } else {
             toast.error(error.message);
           }
+          return;
+        }
+        // Supabase returns a fake user with no identities for repeated signups
+        if (signUpData?.user && (!signUpData.user.identities || signUpData.user.identities.length === 0)) {
+          toast.error('This email is already registered. Please sign in.');
           return;
         }
         // Send custom OTP via Resend
