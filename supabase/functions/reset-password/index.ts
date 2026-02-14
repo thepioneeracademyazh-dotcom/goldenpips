@@ -9,7 +9,7 @@ function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-function buildOtpEmail(otp: string): string {
+function buildOtpEmailHtml(otp: string): string {
   return `<html>
 <body style="font-family: Arial, sans-serif; background-color: #f9f5e8; padding: 40px 20px; text-align: center;">
   <div style="max-width: 420px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 40px 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
@@ -24,6 +24,31 @@ function buildOtpEmail(otp: string): string {
   </div>
 </body>
 </html>`;
+}
+
+async function sendOtpEmail(email: string, otp: string): Promise<void> {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) throw new Error('Email service not configured');
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'GoldenPips <onboarding@resend.dev>',
+      to: [email],
+      subject: 'GoldenPips Trading Signals - Password Reset Code',
+      html: buildOtpEmailHtml(otp),
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Resend error:', err);
+    throw new Error('Failed to send email');
+  }
 }
 
 Deno.serve(async (req) => {
@@ -45,21 +70,19 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check if user exists
-      const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
-      if (userError) throw userError;
-      const userExists = userData.users.some((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+      // Check if user exists (silently succeed if not to prevent enumeration)
+      const { data: userData } = await supabase.auth.admin.listUsers();
+      const userExists = userData?.users?.some((u: any) => u.email?.toLowerCase() === email.toLowerCase());
       if (!userExists) {
-        // Return success anyway to avoid email enumeration
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Invalidate old OTPs for this email
+      // Invalidate old OTPs
       await supabase.from('password_reset_otps').update({ used: true }).eq('email', email.toLowerCase()).eq('used', false);
 
-      // Generate and store new OTP
+      // Generate and store OTP
       const otpCode = generateOtp();
       const { error: insertError } = await supabase.from('password_reset_otps').insert({
         email: email.toLowerCase(),
@@ -67,54 +90,8 @@ Deno.serve(async (req) => {
       });
       if (insertError) throw insertError;
 
-      // Send email via Supabase Auth admin (using inbucket/SMTP)
-      const res = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-          'apikey': supabaseServiceKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'magiclink',
-          email: email,
-        }),
-      });
-
-      // We don't actually use the magic link - we just need the email sending mechanism
-      // Instead, send a custom email using the SMTP approach
-      // Use Supabase's built-in email by sending via the auth admin API with a custom template
-      
-      // Actually, let's use the Resend-compatible approach or direct SMTP
-      // Since we have access to Supabase's internal mail, let's use a workaround:
-      // We'll use supabase.auth.admin.inviteUserByEmail won't work either.
-      // Best approach: use the Supabase project's built-in SMTP by calling the REST API directly
-
-      // Send OTP email using Supabase's built-in email service
-      const emailRes = await fetch(`${supabaseUrl}/auth/v1/otp`, {
-        method: 'POST',
-        headers: {
-          'apikey': Deno.env.get('SUPABASE_ANON_KEY') || supabaseServiceKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          // This triggers the built-in OTP email but we're using our own OTP table
-          // We need a different approach - let's use the admin generateLink and send custom email
-        }),
-      });
-
-      // The above approaches rely on Supabase's email infrastructure which sends its own template
-      // The cleanest solution: use fetch to send email via a third-party or use Supabase's 
-      // hookable email sending. Let's just piggyback on the auth.resetPasswordForEmail but
-      // intercept at the template level... but that's what doesn't work.
-      
-      // FINAL APPROACH: Use Lovable AI gateway to avoid needing external email service,
-      // or better yet, just send raw SMTP. But the simplest is to use Supabase's 
-      // auth.admin.generateLink to get a link, ignore it, and send our own email.
-
-      // Let's use a direct approach - call Supabase's internal mail sender
-      console.log(`OTP ${otpCode} generated for ${email}`);
+      // Send branded email with OTP
+      await sendOtpEmail(email, otpCode);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -156,7 +133,7 @@ Deno.serve(async (req) => {
 
       // Find user and update password
       const { data: userData } = await supabase.auth.admin.listUsers();
-      const user = userData?.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+      const user = userData?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
 
       if (!user) {
         return new Response(JSON.stringify({ error: 'User not found' }), {
