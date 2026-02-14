@@ -17,23 +17,37 @@ const VAPID_KEY = "BIhtctDX1GUgjP6JMIuh9yI97CzdbdrLDjgTYZKQQH85nZ1FVvyiYAsUTVlG7
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Set up foreground message handler
+// Set up foreground message handler - show as system push notification
 async function setupForegroundHandler() {
   try {
     const supported = await isSupported();
     if (!supported) return;
 
     const messaging = getMessaging(app);
-    onMessage(messaging, (payload) => {
+    onMessage(messaging, async (payload) => {
       console.log('Foreground notification received:', payload);
       const title = payload.notification?.title || 'GoldenPips';
       const body = payload.notification?.body || 'New notification';
       
-      // Show as a toast instead of raw JSON
-      toast(title, {
-        description: body,
-        duration: 6000,
-      });
+      // Show as actual system push notification (not just a toast)
+      if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          await registration.showNotification(title, {
+            body,
+            icon: 'https://goldenpips.online/icons/icon-192x192.png',
+            badge: 'https://goldenpips.online/icons/icon-72x72.png',
+            data: { url: 'https://goldenpips.online' },
+          } as NotificationOptions);
+        } catch (err) {
+          console.error('Failed to show system notification:', err);
+          // Fallback to toast
+          toast(title, { description: body, duration: 6000 });
+        }
+      } else {
+        // Fallback to toast if no permission
+        toast(title, { description: body, duration: 6000 });
+      }
     });
   } catch (error) {
     console.error('Error setting up foreground handler:', error);
