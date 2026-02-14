@@ -37,7 +37,7 @@ async function sendOtpEmail(email: string, otp: string): Promise<void> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'GoldenPips <onboarding@resend.dev>',
+      from: 'GoldenPips <noreply@goldenpips.online>',
       to: [email],
       subject: 'GoldenPips Trading Signals - Password Reset Code',
       html: buildOtpEmailHtml(otp),
