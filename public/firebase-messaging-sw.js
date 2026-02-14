@@ -19,16 +19,20 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('Received background message:', payload);
 
-  const notificationTitle = payload.notification?.title || 'GoldenPips';
+  // Only show custom notification if there's no notification payload
+  // (FCM auto-displays when notification payload is present)
+  if (payload.notification) {
+    // FCM handles display automatically for notification messages
+    return;
+  }
+
+  const notificationTitle = payload.data?.title || 'GoldenPips';
   const notificationOptions = {
-    body: payload.notification?.body || 'New notification',
+    body: payload.data?.body || 'New notification',
     icon: 'https://goldenpips.online/icons/icon-192x192.png',
     badge: 'https://goldenpips.online/icons/icon-72x72.png',
     vibrate: [100, 50, 100],
-    data: payload.data || {},
-    actions: [
-      { action: 'open', title: 'Open App' }
-    ]
+    data: { url: 'https://goldenpips.online' },
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

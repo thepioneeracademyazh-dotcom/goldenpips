@@ -176,29 +176,39 @@ Deno.serve(async (req) => {
     let successCount = 0;
     let failureCount = 0;
 
-    // Send individually using HTTP v1 API
+    // Send individually using HTTP v1 API (notification-only, no data payload)
     for (const deviceToken of targetTokens) {
       try {
         const messagePayload = {
           message: {
             token: deviceToken,
-            notification: { title, body },
+            notification: {
+              title,
+              body,
+            },
             android: {
+              priority: 'high',
               notification: {
-                click_action: 'OPEN_APP',
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                sound: 'default',
                 default_sound: true,
+                icon: 'ic_notification',
+                channel_id: 'default',
               },
             },
             webpush: {
               headers: { Urgency: 'high' },
               notification: {
+                title,
+                body,
                 icon: 'https://goldenpips.online/icons/icon-192x192.png',
                 badge: 'https://goldenpips.online/icons/icon-72x72.png',
                 requireInteraction: true,
               },
-              fcm_options: { link: 'https://goldenpips.online' },
+              fcm_options: {
+                link: 'https://goldenpips.online',
+              },
             },
-            ...(data && Object.keys(data).length > 0 ? { data } : {}),
           },
         };
 
