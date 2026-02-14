@@ -45,7 +45,7 @@ function buildWelcomeEmailHtml(fullName: string, email: string): string {
       You can now log in and explore our trading signals. Upgrade to <strong style="color: #d4a017;">Premium</strong> anytime to unlock all signals and exclusive features.
     </p>
 
-    <a href="https://goldenpips.lovable.app" style="display: inline-block; background: linear-gradient(135deg, #d4a017, #b8860b); color: #fff; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-size: 15px; font-weight: bold;">Open GoldenPips</a>
+    <a href="https://goldenpips.online" style="display: inline-block; background: linear-gradient(135deg, #d4a017, #b8860b); color: #fff; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-size: 15px; font-weight: bold;">Open GoldenPips</a>
 
     <p style="color: #999; font-size: 11px; margin-top: 28px;">If you did not create this account, please ignore this email.</p>
   </div>
