@@ -176,7 +176,7 @@ export default function AuthPage() {
       // Send welcome notification
       try {
         await supabase.functions.invoke('send-welcome-email', {
-          body: { email: pendingEmail, type: 'welcome' },
+          body: { email: pendingEmail, fullName: pendingName },
         });
       } catch {
         // Non-critical
