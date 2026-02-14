@@ -173,15 +173,6 @@ export default function AuthPage() {
         return;
       }
 
-      // Send welcome notification
-      try {
-        await supabase.functions.invoke('send-welcome-email', {
-          body: { email: pendingEmail, fullName: pendingName },
-        });
-      } catch {
-        // Non-critical
-      }
-
       toast.success('Email verified! Welcome to GoldenPips!');
       // Sign in the user after verification
       navigate('/auth', { replace: true });

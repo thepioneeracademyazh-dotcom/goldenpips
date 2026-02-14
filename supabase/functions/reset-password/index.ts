@@ -12,15 +12,20 @@ function generateOtp(): string {
 function buildOtpEmailHtml(otp: string): string {
   return `<html>
 <body style="font-family: Arial, sans-serif; background-color: #f9f5e8; padding: 40px 20px; text-align: center;">
-  <div style="max-width: 420px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 40px 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
-    <h1 style="color: #d4a017; margin-bottom: 8px; font-size: 24px;">Golden<span style="color: #1a1a1a;">Pips</span></h1>
-    <p style="color: #666; font-size: 14px; margin-bottom: 24px;">Premium Gold Trading Signals</p>
+  <div style="max-width: 420px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 24px 20px; text-align: center;">
+      <img src="https://goldenpips.online/icons/icon-192x192.png" alt="GoldenPips" width="56" height="56" style="border-radius: 12px; margin-bottom: 8px; border: 2px solid rgba(212,160,23,0.3);" />
+      <h1 style="color: #d4a017; margin: 0 0 2px 0; font-size: 22px;">Golden<span style="color: #ffffff;">Pips</span></h1>
+      <p style="color: #aaa; font-size: 11px; margin: 0; letter-spacing: 1px; text-transform: uppercase;">Premium Gold Trading Signals</p>
+    </div>
+    <div style="padding: 32px 30px;">
     <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 12px;">Password Reset Code</h2>
     <p style="color: #555; font-size: 14px; margin-bottom: 24px;">Use the code below to reset your password. This code expires in 10 minutes.</p>
     <div style="background: #f9f5e8; border: 2px solid #d4a017; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
       <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #d4a017;">${otp}</span>
     </div>
     <p style="color: #999; font-size: 12px;">If you did not request a password reset, please ignore this email.</p>
+    </div>
   </div>
 </body>
 </html>`;

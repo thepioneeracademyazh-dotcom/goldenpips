@@ -30,9 +30,13 @@ function buildPremiumEmailHtml(data: PremiumEmailData): string {
   const displayName = data.fullName || data.email;
   return `<html>
 <body style="font-family: Arial, sans-serif; background-color: #f9f5e8; padding: 40px 20px; text-align: center;">
-  <div style="max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 40px 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
-    <h1 style="color: #d4a017; margin-bottom: 4px; font-size: 28px;">Golden<span style="color: #1a1a1a;">Pips</span></h1>
-    <p style="color: #666; font-size: 13px; margin-bottom: 28px;">Premium Gold Trading Signals</p>
+  <div style="max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 24px 20px; text-align: center;">
+      <img src="https://goldenpips.online/icons/icon-192x192.png" alt="GoldenPips" width="56" height="56" style="border-radius: 12px; margin-bottom: 8px; border: 2px solid rgba(212,160,23,0.3);" />
+      <h1 style="color: #d4a017; margin: 0 0 2px 0; font-size: 22px;">Golden<span style="color: #ffffff;">Pips</span></h1>
+      <p style="color: #aaa; font-size: 11px; margin: 0; letter-spacing: 1px; text-transform: uppercase;">Premium Gold Trading Signals</p>
+    </div>
+    <div style="padding: 40px 30px;">
 
     <div style="background: linear-gradient(135deg, #d4a017, #b8860b); border-radius: 10px; padding: 24px; margin-bottom: 24px;">
       <h2 style="color: #fff; font-size: 22px; margin: 0 0 6px 0;">🎉 Premium Activated!</h2>
@@ -83,6 +87,7 @@ function buildPremiumEmailHtml(data: PremiumEmailData): string {
     <a href="https://goldenpips.online" style="display: inline-block; background: linear-gradient(135deg, #d4a017, #b8860b); color: #fff; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-size: 15px; font-weight: bold;">Open GoldenPips</a>
 
     <p style="color: #999; font-size: 11px; margin-top: 28px;">Thank you for choosing GoldenPips. If you have questions, contact us at goldenpipsofficial1@gmail.com</p>
+    </div>
   </div>
 </body>
 </html>`;
