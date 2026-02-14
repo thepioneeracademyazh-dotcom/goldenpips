@@ -83,10 +83,14 @@ export default function ForgotPasswordPage() {
         body: { action: 'verify_and_reset', email, otp: otpValue, new_password: newPassword },
       });
       if (error) {
-        // Parse error body for specific message
         try {
-          const parsed = JSON.parse(error.message || '{}');
-          toast.error(parsed.error || 'Something went wrong. Please try again.');
+          const ctx = (error as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            toast.error(body.error || 'Something went wrong. Please try again.');
+          } else {
+            toast.error('Something went wrong. Please try again.');
+          }
         } catch {
           toast.error('Something went wrong. Please try again.');
         }
