@@ -409,17 +409,12 @@ export default function AdminPage() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      // Delete user's subscription first
-      await supabase.from('subscriptions').delete().eq('user_id', userId);
-      
-      // Delete user's roles
-      await supabase.from('user_roles').delete().eq('user_id', userId);
-      
-      // Delete user's profile
-      const { error } = await supabase.from('profiles').delete().eq('user_id', userId);
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId },
+      });
 
       if (error) throw error;
-      toast.success('User data deleted');
+      toast.success('User fully deleted');
       fetchData();
     } catch (error) {
       console.error('Error deleting user:', error);
