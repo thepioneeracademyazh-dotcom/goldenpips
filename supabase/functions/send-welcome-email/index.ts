@@ -9,9 +9,13 @@ function buildWelcomeEmailHtml(fullName: string, email: string): string {
   const displayName = fullName || email;
   return `<html>
 <body style="font-family: Arial, sans-serif; background-color: #f9f5e8; padding: 40px 20px; text-align: center;">
-  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 40px 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
-    <h1 style="color: #d4a017; margin-bottom: 4px; font-size: 28px;">Golden<span style="color: #1a1a1a;">Pips</span></h1>
-    <p style="color: #666; font-size: 13px; margin-bottom: 28px;">Premium Gold Trading Signals</p>
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 32px 30px 24px; text-align: center;">
+      <img src="https://goldenpips.online/icons/icon-192x192.png" alt="GoldenPips" width="72" height="72" style="border-radius: 16px; margin-bottom: 12px; border: 2px solid rgba(212,160,23,0.3);" />
+      <h1 style="color: #d4a017; margin: 0 0 4px 0; font-size: 26px;">Golden<span style="color: #ffffff;">Pips</span></h1>
+      <p style="color: #aaa; font-size: 12px; margin: 0; letter-spacing: 1px; text-transform: uppercase;">Premium Gold Trading Signals</p>
+    </div>
+    <div style="padding: 32px 30px 40px;">
     
     <div style="background: #f9f5e8; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
       <h2 style="color: #1a1a1a; font-size: 22px; margin: 0 0 8px 0;">Welcome Aboard! 🎉</h2>
@@ -48,6 +52,7 @@ function buildWelcomeEmailHtml(fullName: string, email: string): string {
     <a href="https://goldenpips.online" style="display: inline-block; background: linear-gradient(135deg, #d4a017, #b8860b); color: #fff; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-size: 15px; font-weight: bold;">Open GoldenPips</a>
 
     <p style="color: #999; font-size: 11px; margin-top: 28px;">If you did not create this account, please ignore this email.</p>
+    </div>
   </div>
 </body>
 </html>`;
