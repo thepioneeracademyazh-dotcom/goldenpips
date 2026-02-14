@@ -184,16 +184,22 @@ export default function AdminPage() {
 
         if (error) throw error;
         
-        // Auto-send push notification to all members about new signal
+        // Send different notifications to free vs premium users
         try {
-          const notifTitle = `New ${signal_type.toUpperCase()} Signal 🚀`;
-          const notifBody = `Entry: ${entry_price} | SL: ${stop_loss} | TP1: ${take_profit_1} | TP2: ${take_profit_2}`;
-          
+          // Premium users get full signal details
           await supabase.functions.invoke('send-notification', {
             body: {
-              title: notifTitle,
-              body: notifBody,
-              targetAudience: 'all',
+              title: `New ${signal_type.toUpperCase()} Signal 🚀`,
+              body: `Entry: ${entry_price} | SL: ${stop_loss} | TP1: ${take_profit_1} | TP2: ${take_profit_2}`,
+              targetAudience: 'premium',
+            },
+          });
+          // Free users get a teaser
+          await supabase.functions.invoke('send-notification', {
+            body: {
+              title: `New ${signal_type.toUpperCase()} Signal 🚀`,
+              body: 'A new trading signal is available! Upgrade to Premium to see full details.',
+              targetAudience: 'free',
             },
           });
         } catch (pushErr) {
