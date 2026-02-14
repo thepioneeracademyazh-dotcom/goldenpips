@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { InstallPWA } from "@/components/InstallPWA";
 import { BlockedScreen } from "@/components/BlockedScreen";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useTheme } from "@/hooks/use-theme";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Signals from "./pages/Signals";
@@ -25,6 +26,7 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const { user, loading } = useAuth();
+  useTheme(); // Initialize theme from localStorage on app load
 
   // Show loading while checking auth
   if (loading) {

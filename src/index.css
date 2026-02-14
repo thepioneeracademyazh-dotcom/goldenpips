@@ -9,56 +9,7 @@
 
 @layer base {
   :root {
-    /* Light mode (fallback, app is dark-first) */
-    --background: 0 0% 100%;
-    --foreground: 40 6% 10%;
-
-    --card: 0 0% 98%;
-    --card-foreground: 40 6% 10%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 40 6% 10%;
-
-    --primary: 45 93% 47%;
-    --primary-foreground: 0 0% 0%;
-
-    --secondary: 40 10% 90%;
-    --secondary-foreground: 40 6% 10%;
-
-    --muted: 40 10% 94%;
-    --muted-foreground: 40 6% 40%;
-
-    --accent: 45 100% 51%;
-    --accent-foreground: 0 0% 0%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 0%;
-
-    --border: 40 10% 85%;
-    --input: 40 10% 85%;
-    --ring: 45 93% 47%;
-
-    --radius: 0.75rem;
-
-    /* Custom gold shades */
-    --gold: 45 93% 47%;
-    --gold-light: 45 93% 60%;
-    --gold-dark: 45 93% 35%;
-    --gold-muted: 45 30% 50%;
-
-    /* Trading colors */
-    --buy: 142 76% 36%;
-    --sell: 0 84% 60%;
-  }
-
-  .dark {
-    /* Light cream/warm gradient background */
+    /* Warm cream/gold light theme (default) */
     --background: 40 30% 96%;
     --foreground: 220 20% 15%;
 
@@ -93,6 +44,8 @@
     --input: 40 20% 90%;
     --ring: 45 93% 47%;
 
+    --radius: 0.75rem;
+
     /* Custom gold shades */
     --gold: 45 93% 47%;
     --gold-light: 45 93% 55%;
@@ -112,6 +65,62 @@
     --sidebar-border: 40 20% 85%;
     --sidebar-ring: 45 93% 47%;
   }
+
+  .dark {
+    /* True dark trading theme */
+    --background: 220 20% 7%;
+    --foreground: 40 20% 90%;
+
+    --card: 220 18% 10%;
+    --card-foreground: 40 20% 90%;
+
+    --popover: 220 18% 10%;
+    --popover-foreground: 40 20% 90%;
+
+    --primary: 45 93% 47%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 220 15% 16%;
+    --secondary-foreground: 40 20% 85%;
+
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 45 100% 51%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+
+    --border: 220 15% 18%;
+    --input: 220 15% 16%;
+    --ring: 45 93% 47%;
+
+    /* Custom gold shades */
+    --gold: 45 93% 47%;
+    --gold-light: 45 93% 60%;
+    --gold-dark: 45 93% 35%;
+    --gold-muted: 45 30% 50%;
+
+    /* Trading colors */
+    --buy: 142 76% 36%;
+    --sell: 0 84% 60%;
+
+    --sidebar-background: 220 18% 9%;
+    --sidebar-foreground: 40 20% 90%;
+    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 220 15% 16%;
+    --sidebar-accent-foreground: 40 20% 85%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 45 93% 47%;
+  }
 }
 
 @layer base {
@@ -120,7 +129,7 @@
   }
 
   html {
-    @apply dark;
+    /* Theme class applied dynamically via useTheme hook */
   }
 
   body {
@@ -171,7 +180,7 @@
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, hsl(40 35% 97%) 0%, hsl(45 30% 94%) 50%, hsl(40 25% 96%) 100%);
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 50%, hsl(var(--background)) 100%);
   }
 
   .gradient-bg-premium {
