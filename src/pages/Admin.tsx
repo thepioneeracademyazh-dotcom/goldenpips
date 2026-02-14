@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Users, TrendingUp, Bell, Edit, Trash2, Save, Loader2, Crown, User, Ban, CheckCircle, UserX, Quote, DollarSign } from 'lucide-react';
+import { Plus, Users, TrendingUp, Bell, Edit, Trash2, Save, Loader2, Crown, User, Ban, CheckCircle, UserX, Quote, DollarSign, KeyRound, History, CreditCard, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,7 +18,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { SignalCard } from '@/components/SignalCard';
 import { RevenueStats } from '@/components/admin/RevenueStats';
 import { toast } from 'sonner';
-import { Signal, SignalType, SignalStatus, Profile, Subscription, Notification, DailyQuote } from '@/types';
+import { Signal, SignalType, SignalStatus, Profile, Subscription, Notification, DailyQuote, PaymentHistory } from '@/types';
 import { format } from 'date-fns';
 
 interface UserWithSub {
@@ -41,6 +41,20 @@ export default function AdminPage() {
   const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
   const [saving, setSaving] = useState(false);
   const [sendingPush, setSendingPush] = useState(false);
+
+  // Admin support tool states
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+
+  const [paymentHistoryDialogOpen, setPaymentHistoryDialogOpen] = useState(false);
+  const [paymentHistoryUserId, setPaymentHistoryUserId] = useState<string | null>(null);
+  const [paymentHistoryData, setPaymentHistoryData] = useState<PaymentHistory[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
 
   // Signal form state
   const [signalForm, setSignalForm] = useState({
@@ -404,6 +418,88 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error updating user block status:', error);
       toast.error('Failed to update user');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordUserId || !resetPasswordValue) return;
+    if (resetPasswordValue.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    setResettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: { userId: resetPasswordUserId, newPassword: resetPasswordValue },
+      });
+      if (error) throw error;
+      toast.success('Password reset successfully');
+      setResetPasswordDialogOpen(false);
+      setResetPasswordValue('');
+      setResetPasswordUserId(null);
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast.error(error.message || 'Failed to reset password');
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
+  const openPaymentHistory = async (userId: string) => {
+    setPaymentHistoryUserId(userId);
+    setPaymentHistoryDialogOpen(true);
+    setLoadingPayments(true);
+    try {
+      const { data, error } = await supabase
+        .from('payment_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setPaymentHistoryData(data as PaymentHistory[]);
+    } catch (error) {
+      console.error('Error fetching payment history:', error);
+      toast.error('Failed to load payment history');
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
+
+  const handleConfirmPayment = async (userId: string, paymentId: string) => {
+    setConfirmingPayment(true);
+    try {
+      // Update payment status to completed
+      const { error: payError } = await supabase
+        .from('payment_history')
+        .update({ status: 'confirmed' })
+        .eq('id', paymentId);
+      if (payError) throw payError;
+
+      // Activate premium subscription
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+      const { error: subError } = await supabase
+        .from('subscriptions')
+        .update({
+          status: 'premium',
+          is_first_time_user: false,
+          started_at: new Date().toISOString(),
+          expires_at: expiresAt.toISOString(),
+        })
+        .eq('user_id', userId);
+      if (subError) throw subError;
+
+      toast.success('Payment confirmed & premium activated!');
+      fetchData();
+      // Refresh payment history if dialog is open
+      if (paymentHistoryDialogOpen) {
+        openPaymentHistory(userId);
+      }
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      toast.error('Failed to confirm payment');
+    } finally {
+      setConfirmingPayment(false);
     }
   };
 
@@ -830,6 +926,29 @@ export default function AdminPage() {
                             </Button>
                           </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-card border-border">
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setResetPasswordUserId(profile.user_id);
+                              setResetPasswordValue('');
+                              setShowResetPassword(false);
+                              setResetPasswordDialogOpen(true);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <KeyRound className="w-4 h-4 mr-2" />
+                            Reset Password
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem 
+                            onClick={() => openPaymentHistory(profile.user_id)}
+                            className="cursor-pointer"
+                          >
+                            <History className="w-4 h-4 mr-2" />
+                            Payment History
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+
                           {!isPremium && !isBlocked && (
                             <DropdownMenuItem 
                               onClick={() => handleManualUpgrade(profile.user_id)}
@@ -1023,6 +1142,105 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={(open) => {
+        setResetPasswordDialogOpen(open);
+        if (!open) { setResetPasswordValue(''); setResetPasswordUserId(null); }
+      }}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle>Reset User Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>New Password</Label>
+              <div className="relative">
+                <Input
+                  type={showResetPassword ? 'text' : 'password'}
+                  value={resetPasswordValue}
+                  onChange={(e) => setResetPasswordValue(e.target.value)}
+                  placeholder="Enter new password (min 6 chars)"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  onClick={() => setShowResetPassword(!showResetPassword)}
+                >
+                  {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The user will need to be informed of their new password directly.
+            </p>
+            <Button
+              className="w-full gradient-gold text-primary-foreground"
+              onClick={handleResetPassword}
+              disabled={resettingPassword || resetPasswordValue.length < 6}
+            >
+              {resettingPassword ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <KeyRound className="w-4 h-4 mr-2" />}
+              Reset Password
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment History Dialog */}
+      <Dialog open={paymentHistoryDialogOpen} onOpenChange={(open) => {
+        setPaymentHistoryDialogOpen(open);
+        if (!open) { setPaymentHistoryData([]); setPaymentHistoryUserId(null); }
+      }}>
+        <DialogContent className="bg-card border-border max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Payment History</DialogTitle>
+          </DialogHeader>
+          {loadingPayments ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : paymentHistoryData.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No payment records found</p>
+          ) : (
+            <div className="space-y-3">
+              {paymentHistoryData.map((payment) => (
+                <Card key={payment.id} className="p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">${payment.amount} {payment.currency}</span>
+                    <Badge variant="outline" className={
+                      payment.status === 'confirmed' || payment.status === 'completed'
+                        ? 'bg-success/20 text-success border-success/30'
+                        : payment.status === 'pending' || payment.status === 'waiting'
+                          ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
+                          : 'bg-destructive/20 text-destructive border-destructive/30'
+                    }>
+                      {payment.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Network: {payment.network}</p>
+                  {payment.payment_id && (
+                    <p className="text-xs text-muted-foreground break-all">ID: {payment.payment_id}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(payment.created_at), 'MMM dd, yyyy • HH:mm')}
+                  </p>
+                  {(payment.status === 'pending' || payment.status === 'waiting') && paymentHistoryUserId && (
+                    <Button
+                      size="sm"
+                      className="w-full mt-2 h-7 text-xs"
+                      onClick={() => handleConfirmPayment(paymentHistoryUserId!, payment.id)}
+                      disabled={confirmingPayment}
+                    >
+                      {confirmingPayment ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <CreditCard className="w-3 h-3 mr-1" />}
+                      Confirm & Activate Premium
+                    </Button>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
