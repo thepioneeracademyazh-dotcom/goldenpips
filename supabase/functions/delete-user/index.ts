@@ -51,10 +51,20 @@ serve(async (req) => {
       });
     }
 
-    // Delete from public tables first
+    // Get user email for OTP cleanup
+    const { data: profile } = await supabase.from('profiles').select('email').eq('user_id', userId).maybeSingle();
+
+    // Delete from all public tables
+    await supabase.from('payment_history').delete().eq('user_id', userId);
     await supabase.from('subscriptions').delete().eq('user_id', userId);
     await supabase.from('user_roles').delete().eq('user_id', userId);
     await supabase.from('profiles').delete().eq('user_id', userId);
+    
+    // Clean up OTP records
+    if (profile?.email) {
+      await supabase.from('signup_verification_otps').delete().eq('email', profile.email.toLowerCase());
+      await supabase.from('password_reset_otps').delete().eq('email', profile.email.toLowerCase());
+    }
 
     // Delete from auth.users
     const { error } = await supabase.auth.admin.deleteUser(userId);
