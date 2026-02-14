@@ -155,6 +155,17 @@ Deno.serve(async (req) => {
         await supabase.from('user_roles').insert({ user_id: user.id, role: 'user' });
       }
 
+      // Send branded welcome email (fire-and-forget)
+      const functionUrl = `${supabaseUrl}/functions/v1/send-welcome-email`;
+      fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({ email: email.toLowerCase(), fullName: fullName || null }),
+      }).catch(err => console.error('Welcome email trigger failed:', err));
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
