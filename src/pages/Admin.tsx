@@ -786,52 +786,49 @@ export default function AdminPage() {
 
               return (
                 <Card key={profile.id} className={`card-trading p-4 ${isBlocked ? 'opacity-60' : ''}`}>
-                    <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className={`p-2 rounded-lg shrink-0 ${
-                        isBlocked ? 'bg-destructive/20' : 
-                        isPremium ? 'bg-primary/20' : 'bg-muted'
-                      }`}>
-                        {isBlocked ? (
-                          <Ban className="w-4 h-4 text-destructive" />
-                        ) : isPremium ? (
-                          <Crown className="w-4 h-4 text-primary" />
-                        ) : (
-                          <User className="w-4 h-4 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-foreground text-sm truncate">
-                          {profile.full_name || profile.email}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
-                        {subscription?.expires_at && (
-                          <p className="text-xs text-muted-foreground">
-                            Expires: {format(new Date(subscription.expires_at), 'MMM dd, yyyy')}
-                          </p>
-                        )}
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${
+                      isBlocked ? 'bg-destructive/20' : 
+                      isPremium ? 'bg-primary/20' : 'bg-muted'
+                    }`}>
+                      {isBlocked ? (
+                        <Ban className="w-4 h-4 text-destructive" />
+                      ) : isPremium ? (
+                        <Crown className="w-4 h-4 text-primary" />
+                      ) : (
+                        <User className="w-4 h-4 text-muted-foreground" />
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge 
-                        variant="outline" 
-                        className={
-                          isBlocked 
-                            ? 'bg-destructive/20 text-destructive border-destructive/30'
-                            : isPremium 
-                              ? 'bg-primary/20 text-primary border-primary/30' 
-                              : 'bg-muted text-muted-foreground'
-                        }
-                      >
-                        {isBlocked ? 'Blocked' : isPremium ? 'Premium' : 'Free'}
-                      </Badge>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-8 px-2">
-                            Manage
-                          </Button>
-                        </DropdownMenuTrigger>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground text-sm">
+                        {profile.full_name || profile.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground break-all">{profile.email}</p>
+                      {subscription?.expires_at && (
+                        <p className="text-xs text-muted-foreground">
+                          Expires: {format(new Date(subscription.expires_at), 'MMM dd, yyyy')}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge 
+                          variant="outline" 
+                          className={
+                            isBlocked 
+                              ? 'bg-destructive/20 text-destructive border-destructive/30'
+                              : isPremium 
+                                ? 'bg-primary/20 text-primary border-primary/30' 
+                                : 'bg-muted text-muted-foreground'
+                          }
+                        >
+                          {isBlocked ? 'Blocked' : isPremium ? 'Premium' : 'Free'}
+                        </Badge>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs">
+                              Manage
+                            </Button>
+                          </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-card border-border">
                           {!isPremium && !isBlocked && (
                             <DropdownMenuItem 
@@ -876,6 +873,7 @@ export default function AdminPage() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      </div>
                     </div>
                   </div>
                 </Card>
