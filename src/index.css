@@ -68,57 +68,57 @@
 
   .dark {
     /* True dark trading theme */
-    --background: 220 20% 7%;
-    --foreground: 40 20% 90%;
+    --background: 225 18% 8%;
+    --foreground: 40 15% 92%;
 
-    --card: 220 18% 10%;
-    --card-foreground: 40 20% 90%;
+    --card: 225 15% 12%;
+    --card-foreground: 40 15% 92%;
 
-    --popover: 220 18% 10%;
-    --popover-foreground: 40 20% 90%;
+    --popover: 225 15% 13%;
+    --popover-foreground: 40 15% 92%;
 
     --primary: 45 93% 47%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 40 20% 85%;
+    --secondary: 225 12% 17%;
+    --secondary-foreground: 40 15% 85%;
 
-    --muted: 220 15% 15%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 225 12% 16%;
+    --muted-foreground: 220 8% 58%;
 
     --accent: 45 100% 51%;
     --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
+    --success: 142 72% 42%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 38 92% 55%;
     --warning-foreground: 0 0% 0%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 16%;
+    --border: 225 12% 20%;
+    --input: 225 12% 18%;
     --ring: 45 93% 47%;
 
     /* Custom gold shades */
-    --gold: 45 93% 47%;
-    --gold-light: 45 93% 60%;
-    --gold-dark: 45 93% 35%;
+    --gold: 45 93% 50%;
+    --gold-light: 45 93% 62%;
+    --gold-dark: 45 93% 38%;
     --gold-muted: 45 30% 50%;
 
     /* Trading colors */
-    --buy: 142 76% 36%;
-    --sell: 0 84% 60%;
+    --buy: 142 72% 42%;
+    --sell: 0 80% 62%;
 
-    --sidebar-background: 220 18% 9%;
-    --sidebar-foreground: 40 20% 90%;
+    --sidebar-background: 225 18% 9%;
+    --sidebar-foreground: 40 15% 92%;
     --sidebar-primary: 45 93% 47%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 220 15% 16%;
-    --sidebar-accent-foreground: 40 20% 85%;
-    --sidebar-border: 220 15% 18%;
+    --sidebar-accent: 225 12% 17%;
+    --sidebar-accent-foreground: 40 15% 85%;
+    --sidebar-border: 225 12% 20%;
     --sidebar-ring: 45 93% 47%;
   }
 }
@@ -185,9 +185,9 @@
 
   .gradient-bg-premium {
     background: 
-      radial-gradient(ellipse at top right, hsl(45 93% 47% / 0.12) 0%, transparent 50%),
-      radial-gradient(ellipse at bottom left, hsl(45 80% 60% / 0.08) 0%, transparent 50%),
-      linear-gradient(180deg, hsl(40 35% 98%) 0%, hsl(45 25% 94%) 100%);
+      radial-gradient(ellipse at top right, hsl(var(--gold) / 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom left, hsl(var(--gold-light) / 0.08) 0%, transparent 50%),
+      linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
   }
 
   .safe-area-bottom {
@@ -206,7 +206,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(40 20% 92%);
+  background: hsl(var(--muted));
 }
 
 ::-webkit-scrollbar-thumb {
