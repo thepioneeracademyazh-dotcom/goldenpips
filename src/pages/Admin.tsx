@@ -786,9 +786,9 @@ export default function AdminPage() {
 
               return (
                 <Card key={profile.id} className={`card-trading p-4 ${isBlocked ? 'opacity-60' : ''}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
+                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`p-2 rounded-lg shrink-0 ${
                         isBlocked ? 'bg-destructive/20' : 
                         isPremium ? 'bg-primary/20' : 'bg-muted'
                       }`}>
@@ -800,11 +800,11 @@ export default function AdminPage() {
                           <User className="w-4 h-4 text-muted-foreground" />
                         )}
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground text-sm">
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground text-sm truncate">
                           {profile.full_name || profile.email}
                         </p>
-                        <p className="text-xs text-muted-foreground">{profile.email}</p>
+                        <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
                         {subscription?.expires_at && (
                           <p className="text-xs text-muted-foreground">
                             Expires: {format(new Date(subscription.expires_at), 'MMM dd, yyyy')}
@@ -812,7 +812,7 @@ export default function AdminPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Badge 
                         variant="outline" 
                         className={
