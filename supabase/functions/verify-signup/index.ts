@@ -137,6 +137,22 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Ensure profile, subscription, and role exist (handles re-registration after admin delete)
+      const { data: existingProfile } = await supabase.from('profiles').select('id').eq('user_id', user.id).maybeSingle();
+      if (!existingProfile) {
+        await supabase.from('profiles').insert({ user_id: user.id, email: email.toLowerCase() });
+      }
+
+      const { data: existingSub } = await supabase.from('subscriptions').select('id').eq('user_id', user.id).maybeSingle();
+      if (!existingSub) {
+        await supabase.from('subscriptions').insert({ user_id: user.id, status: 'free', is_first_time_user: true });
+      }
+
+      const { data: existingRole } = await supabase.from('user_roles').select('id').eq('user_id', user.id).maybeSingle();
+      if (!existingRole) {
+        await supabase.from('user_roles').insert({ user_id: user.id, role: 'user' });
+      }
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
