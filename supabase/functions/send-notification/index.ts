@@ -179,18 +179,26 @@ Deno.serve(async (req) => {
     // Send individually using HTTP v1 API
     for (const deviceToken of targetTokens) {
       try {
-        const message = {
+        const messagePayload = {
           message: {
             token: deviceToken,
             notification: { title, body },
+            android: {
+              notification: {
+                click_action: 'OPEN_APP',
+                default_sound: true,
+              },
+            },
             webpush: {
+              headers: { Urgency: 'high' },
               notification: {
                 icon: 'https://goldenpips.online/icons/icon-192x192.png',
                 badge: 'https://goldenpips.online/icons/icon-72x72.png',
+                requireInteraction: true,
               },
               fcm_options: { link: 'https://goldenpips.online' },
             },
-            data: data || {},
+            ...(data && Object.keys(data).length > 0 ? { data } : {}),
           },
         };
 
@@ -200,7 +208,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(message),
+          body: JSON.stringify(messagePayload),
         });
 
         if (res.ok) {
