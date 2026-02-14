@@ -22,8 +22,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'GoldenPips';
   const notificationOptions = {
     body: payload.notification?.body || 'New notification',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: 'https://goldenpips.online/icons/icon-192x192.png',
+    badge: 'https://goldenpips.online/icons/icon-72x72.png',
     vibrate: [100, 50, 100],
     data: payload.data || {},
     actions: [
@@ -50,7 +50,7 @@ self.addEventListener('notificationclick', (event) => {
       }
       // Open new window if none exists
       if (clients.openWindow) {
-        return clients.openWindow('/');
+        return clients.openWindow('https://goldenpips.online');
       }
     })
   );

@@ -185,10 +185,10 @@ Deno.serve(async (req) => {
             notification: { title, body },
             webpush: {
               notification: {
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
+                icon: 'https://goldenpips.online/icons/icon-192x192.png',
+                badge: 'https://goldenpips.online/icons/icon-72x72.png',
               },
-              fcm_options: { link: '/' },
+              fcm_options: { link: 'https://goldenpips.online' },
             },
             data: data || {},
           },
