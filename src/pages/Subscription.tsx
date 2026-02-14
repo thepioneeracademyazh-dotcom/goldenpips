@@ -25,6 +25,9 @@ export default function SubscriptionPage() {
   const price = isFirstTimeUser ? 25 : 49;
   const isPremium = user?.isPremium;
   const expiresAt = user?.subscription?.expires_at;
+  const isExpiringSoon = isPremium && expiresAt 
+    ? (new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24) <= 7 
+    : false;
 
   const handleSubscribe = async () => {
     if (!user) {
@@ -160,8 +163,8 @@ export default function SubscriptionPage() {
               </div>
             </div>
 
-            {/* Subscribe Button */}
-            {isPremium ? (
+            {/* Subscribe / Renew Button */}
+            {isPremium && !isExpiringSoon ? (
               <Button className="w-full" disabled>
                 <Check className="w-4 h-4 mr-2" />
                 Already Subscribed
