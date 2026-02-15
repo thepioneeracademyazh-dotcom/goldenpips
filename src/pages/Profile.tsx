@@ -163,7 +163,7 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <>
-                  <h2 className="text-xl font-semibold text-foreground">
+                  <h2 className="text-xl font-bold text-foreground tracking-tight">
                     {user.profile?.full_name || 'Set your name'}
                   </h2>
                   <p className="text-muted-foreground text-sm">{user.email}</p>
@@ -205,7 +205,7 @@ export default function ProfilePage() {
                     <Crown className={`w-5 h-5 ${user.isPremium ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">Subscription</p>
+                    <p className="font-bold text-foreground">Subscription</p>
                     <p className="text-xs text-muted-foreground">
                       {user.isPremium && user.subscription.expires_at
                         ? `Expires ${format(new Date(user.subscription.expires_at), 'MMM dd, yyyy')}`
@@ -232,7 +232,7 @@ export default function ProfilePage() {
                   <Receipt className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">Payment History</p>
+                  <p className="font-bold text-foreground">Payment History</p>
                   <p className="text-xs text-muted-foreground">View your transactions</p>
                 </div>
               </div>
@@ -244,14 +244,14 @@ export default function ProfilePage() {
         {/* Settings */}
         <Card className="card-trading">
           <CardContent className="p-4 space-y-4">
-            <h3 className="font-semibold text-foreground">Settings</h3>
+            <h3 className="font-bold text-foreground">Settings</h3>
             
             <div className="flex items-center justify-between py-2">
               <div className="flex items-center gap-3">
                 <Bell className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Push Notifications</p>
-                  <p className="text-xs text-muted-foreground">Receive signal alerts</p>
+                  <p className="text-sm font-bold text-foreground">Push Notifications</p>
+                  <p className="text-[11px] text-muted-foreground">Receive signal alerts</p>
                 </div>
               </div>
               <Switch defaultChecked />
@@ -261,8 +261,8 @@ export default function ProfilePage() {
               <div className="flex items-center gap-3">
                 {isDark ? <Moon className="w-5 h-5 text-muted-foreground" /> : <Sun className="w-5 h-5 text-muted-foreground" />}
                 <div>
-                  <p className="text-sm font-medium text-foreground">Dark Mode</p>
-                  <p className="text-xs text-muted-foreground">Switch to {isDark ? 'light' : 'dark'} theme</p>
+                  <p className="text-sm font-bold text-foreground">Dark Mode</p>
+                  <p className="text-[11px] text-muted-foreground">Switch to {isDark ? 'light' : 'dark'} theme</p>
                 </div>
               </div>
               <Switch checked={isDark} onCheckedChange={toggleTheme} />
@@ -275,8 +275,8 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-3">
                     <Key className="w-5 h-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium text-foreground">Change Password</p>
-                      <p className="text-xs text-muted-foreground">Update your password</p>
+                      <p className="text-sm font-bold text-foreground">Change Password</p>
+                      <p className="text-[11px] text-muted-foreground">Update your password</p>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -328,7 +328,7 @@ export default function ProfilePage() {
         {/* Links */}
         <Card className="card-trading">
           <CardContent className="p-4 space-y-1">
-            <h3 className="font-semibold text-foreground mb-3">More</h3>
+            <h3 className="font-bold text-foreground mb-3">More</h3>
             
             <div 
               className="flex items-center justify-between py-3 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
@@ -336,7 +336,7 @@ export default function ProfilePage() {
             >
               <div className="flex items-center gap-3">
                 <HelpCircle className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">Help Center</span>
+                <span className="text-sm font-bold text-foreground">Help Center</span>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
@@ -347,7 +347,7 @@ export default function ProfilePage() {
             >
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">Privacy Policy</span>
+                <span className="text-sm font-bold text-foreground">Privacy Policy</span>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
@@ -358,7 +358,7 @@ export default function ProfilePage() {
         <Card className="card-trading">
           <CardContent className="p-4 space-y-4">
             <div>
-              <h3 className="font-semibold text-foreground mb-2">Share App</h3>
+              <h3 className="font-bold text-foreground mb-2">Share App</h3>
               <p className="text-xs text-muted-foreground mb-3">
                 Share GoldenPips with friends and family
               </p>
@@ -384,8 +384,8 @@ export default function ProfilePage() {
                     <Shield className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">Admin Panel</p>
-                    <p className="text-xs text-muted-foreground">Manage signals & users</p>
+                    <p className="font-bold text-foreground">Admin Panel</p>
+                    <p className="text-[11px] text-muted-foreground">Manage signals & users</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-primary" />
