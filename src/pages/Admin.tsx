@@ -56,6 +56,10 @@ export default function AdminPage() {
 
   const [confirmingPayment, setConfirmingPayment] = useState(false);
 
+  // User filter/search state
+  const [userSearch, setUserSearch] = useState('');
+  const [userFilter, setUserFilter] = useState<'all' | 'premium' | 'free' | 'blocked'>('all');
+
   // Signal form state
   const [signalForm, setSignalForm] = useState({
     signal_type: 'buy' as SignalType,
@@ -575,6 +579,27 @@ export default function AdminPage() {
 
   const blockedUsersCount = users.filter(u => u.profile.is_blocked).length;
 
+  const filteredUsers = users.filter(({ profile, subscription }) => {
+    const isPrem = subscription?.status === 'premium' && 
+      (!subscription.expires_at || new Date(subscription.expires_at) > new Date());
+    const isBlocked = profile.is_blocked;
+
+    // Filter
+    if (userFilter === 'premium' && !isPrem) return false;
+    if (userFilter === 'free' && (isPrem || isBlocked)) return false;
+    if (userFilter === 'blocked' && !isBlocked) return false;
+
+    // Search
+    if (userSearch.trim()) {
+      const q = userSearch.toLowerCase();
+      return (
+        (profile.full_name?.toLowerCase().includes(q)) ||
+        profile.email.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
   if (loading) {
     return (
       <AppLayout>
@@ -881,7 +906,33 @@ export default function AdminPage() {
           </TabsContent>
 
           <TabsContent value="users" className="mt-0 space-y-3">
-            {users.map(({ profile, subscription }) => {
+            {/* Search & Filter */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Search by name or email..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="flex-1"
+              />
+              <Select value={userFilter} onValueChange={(v) => setUserFilter(v as any)}>
+                <SelectTrigger className="w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="premium">Premium</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="blocked">Blocked</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {filteredUsers.length === 0 ? (
+              <Card className="card-trading p-8 text-center">
+                <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No users found</p>
+              </Card>
+            ) : filteredUsers.map(({ profile, subscription }) => {
               const isPremium = subscription?.status === 'premium' && 
                 (!subscription.expires_at || new Date(subscription.expires_at) > new Date());
               const isBlocked = profile.is_blocked;
@@ -902,7 +953,7 @@ export default function AdminPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground text-sm">
+                      <p className="font-bold text-foreground text-sm">
                         {profile.full_name || profile.email}
                       </p>
                       <p className="text-xs text-muted-foreground break-all">{profile.email}</p>
