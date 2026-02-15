@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Crown, LogOut, ChevronRight, Bell, Shield, Loader2, HelpCircle, FileText, Share2, Key, Receipt, Moon, Sun, Eye, EyeOff } from 'lucide-react';
 import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
+import { PasswordRequirements, ConfirmPasswordMatch } from '@/components/PasswordRequirements';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
@@ -346,6 +347,7 @@ export default function ProfilePage() {
                       </button>
                   </div>
                   <PasswordStrengthIndicator password={newPassword} />
+                  <PasswordRequirements password={newPassword} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword" className="font-bold">Confirm Password</Label>
@@ -366,6 +368,7 @@ export default function ProfilePage() {
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
+                    <ConfirmPasswordMatch password={newPassword} confirmPassword={confirmPassword} />
                   </div>
                   <Button 
                     className="w-full gradient-gold text-primary-foreground"

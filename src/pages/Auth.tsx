@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
+import { PasswordRequirements, ConfirmPasswordMatch } from '@/components/PasswordRequirements';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -313,6 +314,7 @@ export default function AuthPage() {
                         </button>
                       </div>
                       <PasswordStrengthIndicator password={loginForm.watch('password') || ''} />
+                      <PasswordRequirements password={loginForm.watch('password') || ''} />
                       {loginForm.formState.errors.password && <p className="text-destructive text-xs">{loginForm.formState.errors.password.message}</p>}
                     </div>
 
@@ -371,6 +373,7 @@ export default function AuthPage() {
                         </button>
                       </div>
                       <PasswordStrengthIndicator password={signupForm.watch('password') || ''} />
+                      <PasswordRequirements password={signupForm.watch('password') || ''} />
                       {signupForm.formState.errors.password && <p className="text-destructive text-xs">{signupForm.formState.errors.password.message}</p>}
                     </div>
 
