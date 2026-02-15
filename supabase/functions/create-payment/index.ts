@@ -47,6 +47,22 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // Rate limit: 3 payment creations per user per 10 minutes
+    const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { count } = await supabase
+      .from('rate_limits')
+      .select('*', { count: 'exact', head: true })
+      .eq('key', `create_payment:${userId}`)
+      .gte('created_at', windowStart);
+    
+    if ((count ?? 0) >= 3) {
+      return new Response(
+        JSON.stringify({ error: 'Too many payment requests. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    await supabase.from('rate_limits').insert({ key: `create_payment:${userId}` });
+
     // Determine pricing server-side
     const { data: subscription } = await supabase
       .from('subscriptions')

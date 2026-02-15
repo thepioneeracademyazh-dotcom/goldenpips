@@ -5,6 +5,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function checkRateLimit(supabase: any, key: string, maxRequests: number, windowMinutes: number): Promise<boolean> {
+  const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString();
+  const { count } = await supabase
+    .from('rate_limits')
+    .select('*', { count: 'exact', head: true })
+    .eq('key', key)
+    .gte('created_at', windowStart);
+  
+  if ((count ?? 0) >= maxRequests) return false;
+  
+  await supabase.from('rate_limits').insert({ key });
+  return true;
+}
+
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -75,6 +89,14 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Rate limit: 3 OTP sends per email per 10 minutes
+      const allowed = await checkRateLimit(supabase, `reset_otp:${email.toLowerCase()}`, 3, 10);
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // Check if user exists (silently succeed if not to prevent enumeration)
       const { data: userData } = await supabase.auth.admin.listUsers();
       const userExists = userData?.users?.some((u: any) => u.email?.toLowerCase() === email.toLowerCase());
@@ -106,6 +128,14 @@ Deno.serve(async (req) => {
       if (!email || !otp || !new_password) {
         return new Response(JSON.stringify({ error: 'Email, OTP, and new password are required' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Rate limit: 5 verify attempts per email per 10 minutes
+      const allowed = await checkRateLimit(supabase, `reset_verify:${email.toLowerCase()}`, 5, 10);
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'Too many attempts. Please try again later.' }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
@@ -141,7 +171,8 @@ Deno.serve(async (req) => {
       const user = userData?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
 
       if (!user) {
-        return new Response(JSON.stringify({ error: 'User not found' }), {
+        // Return generic error to prevent enumeration
+        return new Response(JSON.stringify({ error: 'Invalid or expired OTP' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -151,7 +182,7 @@ Deno.serve(async (req) => {
       });
 
       if (updateError) {
-        return new Response(JSON.stringify({ error: updateError.message }), {
+        return new Response(JSON.stringify({ error: 'Failed to update password' }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -167,7 +198,7 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     console.error('Error in reset-password:', error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
+    return new Response(JSON.stringify({ error: 'An error occurred' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
