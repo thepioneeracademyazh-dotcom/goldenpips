@@ -619,23 +619,23 @@ export default function AdminPage() {
         <div className="grid grid-cols-4 gap-2">
           <Card className="card-trading p-3 text-center">
             <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
-            <p className="text-lg font-bold text-foreground">{signals.length}</p>
-            <p className="text-[10px] text-muted-foreground">Signals</p>
+            <p className="text-lg font-extrabold text-foreground">{signals.length}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Signals</p>
           </Card>
           <Card className="card-trading p-3 text-center">
             <Users className="w-4 h-4 text-primary mx-auto mb-1" />
-            <p className="text-lg font-bold text-foreground">{users.length}</p>
-            <p className="text-[10px] text-muted-foreground">Users</p>
+            <p className="text-lg font-extrabold text-foreground">{users.length}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Users</p>
           </Card>
           <Card className="card-trading p-3 text-center">
             <Crown className="w-4 h-4 text-primary mx-auto mb-1" />
-            <p className="text-lg font-bold text-foreground">{premiumUsersCount}</p>
-            <p className="text-[10px] text-muted-foreground">Premium</p>
+            <p className="text-lg font-extrabold text-foreground">{premiumUsersCount}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Premium</p>
           </Card>
           <Card className="card-trading p-3 text-center">
             <Ban className="w-4 h-4 text-destructive mx-auto mb-1" />
-            <p className="text-lg font-bold text-foreground">{blockedUsersCount}</p>
-            <p className="text-[10px] text-muted-foreground">Blocked</p>
+            <p className="text-lg font-extrabold text-foreground">{blockedUsersCount}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Blocked</p>
           </Card>
         </div>
 
@@ -646,7 +646,7 @@ export default function AdminPage() {
             if (!open) resetSignalForm();
           }}>
             <DialogTrigger asChild>
-              <Button className="flex-1 gradient-gold text-primary-foreground">
+              <Button className="flex-1 gradient-gold text-primary-foreground font-bold">
                 <Plus className="w-4 h-4 mr-2" />
                 New Signal
               </Button>
@@ -657,7 +657,7 @@ export default function AdminPage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Signal Type</Label>
+                  <Label className="font-bold">Signal Type</Label>
                   <Select 
                     value={signalForm.signal_type} 
                     onValueChange={(v) => setSignalForm({ ...signalForm, signal_type: v as SignalType })}
@@ -673,7 +673,7 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Entry Price</Label>
+                    <Label className="font-bold">Entry Price</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -683,7 +683,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Stop Loss</Label>
+                    <Label className="font-bold">Stop Loss</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -695,7 +695,7 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Take Profit 1</Label>
+                    <Label className="font-bold">Take Profit 1</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -705,7 +705,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Take Profit 2</Label>
+                    <Label className="font-bold">Take Profit 2</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -716,7 +716,7 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Notes (optional)</Label>
+                  <Label className="font-bold">Notes (optional)</Label>
                   <Textarea
                     value={signalForm.notes}
                     onChange={(e) => setSignalForm({ ...signalForm, notes: e.target.value })}
@@ -725,7 +725,7 @@ export default function AdminPage() {
                   />
                 </div>
                 <Button 
-                  className="w-full gradient-gold text-primary-foreground"
+                  className="w-full gradient-gold text-primary-foreground font-bold"
                   onClick={handleSaveSignal}
                   disabled={saving}
                 >
@@ -741,7 +741,7 @@ export default function AdminPage() {
             if (!open) resetNotificationForm();
           }}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex-1 border-primary/30">
+              <Button variant="outline" className="flex-1 border-primary/30 font-bold">
                 <Bell className="w-4 h-4 mr-2" />
                 Notification
               </Button>
@@ -752,7 +752,7 @@ export default function AdminPage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Title</Label>
+                  <Label className="font-bold">Title</Label>
                   <Input
                     value={notificationForm.title}
                     onChange={(e) => setNotificationForm({ ...notificationForm, title: e.target.value })}
@@ -760,7 +760,7 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Message</Label>
+                  <Label className="font-bold">Message</Label>
                   <Textarea
                     value={notificationForm.body}
                     onChange={(e) => setNotificationForm({ ...notificationForm, body: e.target.value })}
@@ -769,7 +769,7 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Target Audience</Label>
+                  <Label className="font-bold">Target Audience</Label>
                   <Select 
                     value={notificationForm.target_audience} 
                     onValueChange={(v) => setNotificationForm({ ...notificationForm, target_audience: v })}
@@ -785,7 +785,7 @@ export default function AdminPage() {
                   </Select>
                 </div>
                 <Button 
-                  className="w-full gradient-gold text-primary-foreground"
+                  className="w-full gradient-gold text-primary-foreground font-bold"
                   onClick={handleSaveNotification}
                   disabled={saving}
                 >
@@ -800,7 +800,7 @@ export default function AdminPage() {
         {/* Quote Dialog */}
         <Dialog open={showQuoteDialog} onOpenChange={setShowQuoteDialog}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="w-full border-primary/30">
+            <Button variant="outline" className="w-full border-primary/30 font-bold">
               <Quote className="w-4 h-4 mr-2" />
               Add Daily Quote
             </Button>
@@ -811,7 +811,7 @@ export default function AdminPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Quote</Label>
+                <Label className="font-bold">Quote</Label>
                 <Textarea
                   value={quoteForm.quote}
                   onChange={(e) => setQuoteForm({ ...quoteForm, quote: e.target.value })}
@@ -820,7 +820,7 @@ export default function AdminPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Author (optional)</Label>
+                <Label className="font-bold">Author (optional)</Label>
                 <Input
                   value={quoteForm.author}
                   onChange={(e) => setQuoteForm({ ...quoteForm, author: e.target.value })}
@@ -831,7 +831,7 @@ export default function AdminPage() {
                 This quote will be visible for 24 hours from now.
               </p>
               <Button 
-                className="w-full gradient-gold text-primary-foreground"
+                  className="w-full gradient-gold text-primary-foreground font-bold"
                 onClick={handleSaveQuote}
                 disabled={saving}
               >
@@ -956,7 +956,7 @@ export default function AdminPage() {
                       <p className="font-bold text-foreground text-sm">
                         {profile.full_name || profile.email}
                       </p>
-                      <p className="text-xs text-muted-foreground break-all">{profile.email}</p>
+                      <p className="text-xs text-muted-foreground break-all mt-0.5">{profile.email}</p>
                       {subscription?.expires_at && (
                         <p className="text-xs text-muted-foreground">
                           Expires: {format(new Date(subscription.expires_at), 'MMM dd, yyyy')}
@@ -1073,7 +1073,7 @@ export default function AdminPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-foreground text-sm truncate">
+                        <h4 className="font-bold text-foreground text-sm truncate">
                           {notification.title}
                         </h4>
                         <Badge variant="outline" className="text-xs capitalize">
@@ -1155,9 +1155,9 @@ export default function AdminPage() {
                             {isActive ? 'Active' : 'Expired'}
                           </Badge>
                         </div>
-                        <p className="text-sm text-foreground italic">"{quote.quote}"</p>
+                        <p className="text-sm text-foreground italic font-medium">"{quote.quote}"</p>
                         {quote.author && (
-                          <p className="text-xs text-primary mt-1">— {quote.author}</p>
+                          <p className="text-xs text-primary mt-1 font-semibold">— {quote.author}</p>
                         )}
                         <p className="text-xs text-muted-foreground mt-2">
                           Expires: {format(new Date(quote.expires_at), 'MMM dd, yyyy • HH:mm')}
