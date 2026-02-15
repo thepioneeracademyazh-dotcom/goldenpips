@@ -5,6 +5,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function checkRateLimit(supabase: any, key: string, maxRequests: number, windowMinutes: number): Promise<boolean> {
+  const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString();
+  const { count } = await supabase
+    .from('rate_limits')
+    .select('*', { count: 'exact', head: true })
+    .eq('key', key)
+    .gte('created_at', windowStart);
+  
+  if ((count ?? 0) >= maxRequests) return false;
+  
+  await supabase.from('rate_limits').insert({ key });
+  return true;
+}
+
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -75,6 +89,14 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Rate limit: 3 OTP sends per email per 10 minutes
+      const allowed = await checkRateLimit(supabase, `signup_otp:${email.toLowerCase()}`, 3, 10);
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // Invalidate old OTPs for this email
       await supabase.from('signup_verification_otps').update({ used: true }).eq('email', email.toLowerCase()).eq('used', false);
 
@@ -97,6 +119,14 @@ Deno.serve(async (req) => {
       if (!email || !otp) {
         return new Response(JSON.stringify({ error: 'Email and OTP are required' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Rate limit: 5 verify attempts per email per 10 minutes
+      const allowed = await checkRateLimit(supabase, `signup_verify:${email.toLowerCase()}`, 5, 10);
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'Too many attempts. Please try again later.' }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
@@ -137,12 +167,12 @@ Deno.serve(async (req) => {
       });
 
       if (updateError) {
-        return new Response(JSON.stringify({ error: updateError.message }), {
+        return new Response(JSON.stringify({ error: 'Verification failed' }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Ensure profile, subscription, and role exist (handles re-registration after admin delete)
+      // Ensure profile, subscription, and role exist
       const { data: existingProfile } = await supabase.from('profiles').select('id').eq('user_id', user.id).maybeSingle();
       if (!existingProfile) {
         await supabase.from('profiles').insert({ user_id: user.id, email: email.toLowerCase(), full_name: fullName || null });
@@ -182,7 +212,7 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     console.error('Error in verify-signup:', error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
+    return new Response(JSON.stringify({ error: 'An error occurred' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
