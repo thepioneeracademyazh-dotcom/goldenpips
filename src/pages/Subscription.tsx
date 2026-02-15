@@ -40,11 +40,7 @@ export default function SubscriptionPage() {
     try {
       // Call the edge function to create payment
       const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: {
-          userId: user.id,
-          amount: price,
-          currency: 'USDT',
-        },
+        body: {},
       });
 
       if (error) throw error;
