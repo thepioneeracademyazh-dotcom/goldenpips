@@ -139,8 +139,8 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (new_password.length < 6) {
-        return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), {
+      if (new_password.length < 8 || !/[A-Z]/.test(new_password) || !/[0-9]/.test(new_password) || !/[^A-Za-z0-9]/.test(new_password)) {
+        return new Response(JSON.stringify({ error: 'Password must be at least 8 characters with an uppercase letter, number, and special character' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
