@@ -71,17 +71,18 @@ export default function ProfilePage() {
   };
 
   const handleShareApp = async () => {
+    const appUrl = 'https://goldenpips.online';
     const shareData = {
       title: 'GoldenPips',
       text: 'Check out GoldenPips - Premium trading signals for forex traders!',
-      url: window.location.origin
+      url: appUrl
     };
 
     try {
       if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(window.location.origin);
+        await navigator.clipboard.writeText(appUrl);
         toast.success('Link copied to clipboard!');
       }
     } catch (error) {
