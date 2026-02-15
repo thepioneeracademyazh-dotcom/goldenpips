@@ -174,10 +174,11 @@ export default function AuthPage() {
       }
 
       toast.success('Email verified! Welcome to GoldenPips!');
-      // Sign in the user after verification
-      navigate('/auth', { replace: true });
+      // Redirect to login form
       setStep('form');
       setOtpValue('');
+      setIsLogin(true);
+      setAcceptedTerms(false);
       toast.info('Please sign in with your credentials.');
     } catch {
       toast.error('Verification failed. Please try again.');
