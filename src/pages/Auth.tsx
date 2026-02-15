@@ -312,6 +312,7 @@ export default function AuthPage() {
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
+                      <PasswordStrengthIndicator password={loginForm.watch('password') || ''} />
                       {loginForm.formState.errors.password && <p className="text-destructive text-xs">{loginForm.formState.errors.password.message}</p>}
                     </div>
 
