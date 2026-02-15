@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -228,6 +229,7 @@ export default function ForgotPasswordPage() {
                       {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <PasswordStrengthIndicator password={newPassword} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm Password</Label>

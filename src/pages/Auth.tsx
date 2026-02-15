@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -368,6 +369,7 @@ export default function AuthPage() {
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
+                      <PasswordStrengthIndicator password={signupForm.watch('password') || ''} />
                       {signupForm.formState.errors.password && <p className="text-destructive text-xs">{signupForm.formState.errors.password.message}</p>}
                     </div>
 
