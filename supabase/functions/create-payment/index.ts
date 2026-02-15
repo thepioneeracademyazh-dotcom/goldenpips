@@ -3,8 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+const FIRST_TIME_PRICE = 25;
+const REGULAR_PRICE = 49;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,20 +15,55 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, amount, currency } = await req.json();
-
-    if (!userId || !amount) {
+    // Authenticate the user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = claimsData.claims.sub as string;
+
+    // Use service role client for data operations
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // Determine pricing server-side
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('is_first_time_user')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    const isFirstTimeUser = subscription?.is_first_time_user ?? true;
+    const amount = isFirstTimeUser ? FIRST_TIME_PRICE : REGULAR_PRICE;
+    const currency = 'USDT';
 
     const nowpaymentsApiKey = Deno.env.get('NOWPAYMENTS_API_KEY');
     
     if (!nowpaymentsApiKey) {
       console.log('NOWPayments API key not configured - returning mock payment URL');
-      // Return a mock response for testing
       return new Response(
         JSON.stringify({ 
           paymentUrl: `https://nowpayments.io/payment/?amount=${amount}&currency=usdtbsc`,
@@ -63,15 +101,10 @@ serve(async (req) => {
     }
 
     // Save payment record
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
     await supabase.from('payment_history').insert({
       user_id: userId,
       amount,
-      currency: currency || 'USDT',
+      currency,
       payment_id: paymentData.id,
       status: 'pending',
     });
@@ -85,9 +118,8 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Payment creation error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'An error occurred processing your request' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
