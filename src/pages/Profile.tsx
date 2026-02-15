@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Crown, LogOut, ChevronRight, Bell, Shield, Loader2, HelpCircle, FileText, Share2, Key, Receipt, Moon, Sun } from 'lucide-react';
+import { User, Mail, Crown, LogOut, ChevronRight, Bell, Shield, Loader2, HelpCircle, FileText, Share2, Key, Receipt, Moon, Sun, Eye, EyeOff } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
@@ -23,10 +23,14 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState(user?.profile?.full_name || '');
   const [saving, setSaving] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSave = async () => {
     if (!user) return;
@@ -86,7 +90,7 @@ export default function ProfilePage() {
   };
 
   const handleChangePassword = async () => {
-    if (!newPassword || !confirmPassword) {
+    if (!oldPassword || !newPassword || !confirmPassword) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -101,13 +105,27 @@ export default function ProfilePage() {
 
     setChangingPassword(true);
     try {
+      // Re-authenticate with old password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: oldPassword,
+      });
+      if (signInError) {
+        toast.error('Current password is incorrect');
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       
       toast.success('Password changed successfully!');
       setShowPasswordDialog(false);
+      setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setShowOldPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
     } catch (error) {
       console.error('Error changing password:', error);
       toast.error('Failed to change password');
@@ -288,24 +306,64 @@ export default function ProfilePage() {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Enter new password"
-                    />
+                    <Label htmlFor="oldPassword" className="font-bold">Current Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="oldPassword"
+                        type={showOldPassword ? 'text' : 'password'}
+                        value={oldPassword}
+                        onChange={(e) => setOldPassword(e.target.value)}
+                        placeholder="Enter current password"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOldPassword(!showOldPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
-                    />
+                    <Label htmlFor="newPassword" className="font-bold">New Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter new password"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="font-bold">Confirm Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm new password"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                   <Button 
                     className="w-full gradient-gold text-primary-foreground"
