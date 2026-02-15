@@ -12,17 +12,66 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
+    // Verify webhook signature from NOWPayments
+    const signature = req.headers.get('x-nowpayments-sig');
+    const ipnSecret = Deno.env.get('NOWPAYMENTS_IPN_KEY');
+
+    if (!ipnSecret) {
+      console.error('NOWPAYMENTS_IPN_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'Server misconfiguration' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!signature) {
+      console.error('Missing x-nowpayments-sig header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Read body as text for signature verification, then parse
+    const bodyText = await req.text();
+
+    // NOWPayments signs the sorted JSON payload with HMAC-SHA512
+    const bodyObj = JSON.parse(bodyText);
+    const sortedKeys = Object.keys(bodyObj).sort();
+    const sortedObj: Record<string, unknown> = {};
+    for (const key of sortedKeys) {
+      sortedObj[key] = bodyObj[key];
+    }
+    const sortedBody = JSON.stringify(sortedObj);
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(ipnSecret),
+      { name: 'HMAC', hash: 'SHA-512' },
+      false,
+      ['sign']
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(sortedBody));
+    const expectedSig = Array.from(new Uint8Array(sig))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    if (signature !== expectedSig) {
+      console.error('Invalid webhook signature');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const body = bodyObj;
+    console.log('Verified webhook payload:', JSON.stringify(body));
     
-    console.log('Received webhook payload:', JSON.stringify(body));
-    
-    // Extract payment data from NOWPayments IPN
     const {
       payment_id,
       payment_status,
       order_id,
       price_amount,
-      actually_paid,
     } = body;
 
     // Only process finished payments
@@ -123,16 +172,13 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: 'Subscription activated',
-        userId,
-        expiresAt: expiresAt.toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Webhook error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'An error occurred' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
