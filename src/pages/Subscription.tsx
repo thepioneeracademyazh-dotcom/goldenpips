@@ -78,7 +78,7 @@ export default function SubscriptionPage() {
                     <Crown className={`w-5 h-5 ${isPremium ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">
+                    <p className="font-bold text-foreground">
                       {isPremium ? 'Premium Member' : 'Free Plan'}
                     </p>
                     {isPremium && expiresAt && (
@@ -111,8 +111,8 @@ export default function SubscriptionPage() {
             <div className="mx-auto p-3 rounded-2xl gradient-gold w-fit mb-2 glow-gold">
               <Crown className="w-8 h-8 text-primary-foreground" />
             </div>
-            <CardTitle className="text-2xl">Premium</CardTitle>
-            <CardDescription>Full access to all features</CardDescription>
+            <CardTitle className="text-2xl font-extrabold tracking-tight">Premium</CardTitle>
+            <CardDescription className="text-sm">Full access to all features</CardDescription>
             
             {/* Price */}
             <div className="pt-4">
@@ -122,7 +122,7 @@ export default function SubscriptionPage() {
                 </Badge>
               )}
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-4xl font-bold text-gradient-gold">${price}</span>
+                <span className="text-4xl font-extrabold text-gradient-gold">${price}</span>
                 <span className="text-muted-foreground">USDT</span>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
@@ -146,7 +146,7 @@ export default function SubscriptionPage() {
                   <div className="p-1 rounded-full bg-primary/20">
                     <Check className="w-3 h-3 text-primary" />
                   </div>
-                  <span className="text-sm text-foreground">{feature}</span>
+                  <span className="text-sm font-medium text-foreground">{feature}</span>
                 </li>
               ))}
             </ul>
@@ -154,12 +154,12 @@ export default function SubscriptionPage() {
             {/* Payment Info */}
             <div className="bg-muted/50 rounded-lg p-3 space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Shield className="w-4 h-4" />
-                <span>Secure payment via NOWPayments</span>
+                <Shield className="w-4 h-4 shrink-0" />
+                <span className="font-medium">Secure payment via NOWPayments</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>Instant activation after payment</span>
+                <Clock className="w-4 h-4 shrink-0" />
+                <span className="font-medium">Instant activation after payment</span>
               </div>
             </div>
 
@@ -209,12 +209,12 @@ export default function SubscriptionPage() {
         {/* FAQ or Info */}
         <Card className="card-trading">
           <CardContent className="p-4">
-            <h3 className="font-semibold text-foreground mb-2">How it works</h3>
-            <ol className="space-y-2 text-sm text-muted-foreground">
-              <li>1. Click "Subscribe Now" to open payment page</li>
-              <li>2. Send {price} USDT (BEP20) to the provided address</li>
-              <li>3. Your account is automatically upgraded once payment is confirmed</li>
-              <li>4. Enjoy 30 days of premium access!</li>
+            <h3 className="font-bold text-foreground mb-3">How it works</h3>
+            <ol className="space-y-2.5 text-sm text-muted-foreground">
+              <li className="flex gap-2"><span className="font-bold text-foreground">1.</span> Click "Subscribe Now" to open payment page</li>
+              <li className="flex gap-2"><span className="font-bold text-foreground">2.</span> Send {price} USDT (BEP20) to the provided address</li>
+              <li className="flex gap-2"><span className="font-bold text-foreground">3.</span> Your account is automatically upgraded once payment is confirmed</li>
+              <li className="flex gap-2"><span className="font-bold text-foreground">4.</span> Enjoy 30 days of premium access!</li>
             </ol>
           </CardContent>
         </Card>

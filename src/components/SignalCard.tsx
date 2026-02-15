@@ -35,9 +35,9 @@ export function SignalCard({ signal, isPremium, isLocked = false }: SignalCardPr
 
   const PriceRow = ({ label, value, field }: { label: string; value: number; field: string }) => (
     <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-      <span className="text-muted-foreground text-sm">{label}</span>
+      <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">{label}</span>
       <div className="flex items-center gap-2">
-        <span className="font-mono font-semibold text-foreground">
+        <span className="font-mono font-bold text-foreground text-[15px]">
           {isLocked ? '••••••' : value.toFixed(2)}
         </span>
         {!isLocked && (
@@ -114,8 +114,8 @@ export function SignalCard({ signal, isPremium, isLocked = false }: SignalCardPr
           </div>
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-sm rounded-lg">
             <Lock className="w-8 h-8 text-primary mb-2" />
-            <p className="text-sm font-medium text-foreground">Premium Content</p>
-            <p className="text-xs text-muted-foreground">Upgrade to unlock</p>
+            <p className="text-sm font-bold text-foreground">Premium Content</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Upgrade to unlock</p>
           </div>
         </div>
       ) : (

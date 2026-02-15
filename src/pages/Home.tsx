@@ -124,22 +124,22 @@ export default function HomePage() {
         <Card className="card-trading p-5 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
           <div className="relative">
-            <h1 className="text-xl font-bold text-foreground mb-1">
+            <h1 className="text-xl font-bold text-foreground mb-0.5 tracking-tight">
               {user ? `Welcome, ${user.profile?.full_name || user.email.split('@')[0]}!` : 'Welcome to Golden Pips'}
             </h1>
-            <p className="text-muted-foreground text-sm mb-4">
+            <p className="text-muted-foreground text-sm">
               Premium Gold (XAUUSD) Trading Signals
             </p>
             
             {/* Stats */}
-            <div className="flex gap-4">
-              <div className="flex-1 bg-muted/50 rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-primary">{stats.activeSignals}</p>
-                <p className="text-xs text-muted-foreground">Active Signals</p>
+            <div className="flex gap-3 mt-4">
+              <div className="flex-1 bg-muted/50 rounded-xl p-3.5 text-center">
+                <p className="text-2xl font-extrabold text-primary">{stats.activeSignals}</p>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mt-0.5">Active Signals</p>
               </div>
-              <div className="flex-1 bg-muted/50 rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-success">{stats.successRate}%</p>
-                <p className="text-xs text-muted-foreground">Success Rate</p>
+              <div className="flex-1 bg-muted/50 rounded-xl p-3.5 text-center">
+                <p className="text-2xl font-extrabold text-success">{stats.successRate}%</p>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mt-0.5">Success Rate</p>
               </div>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function HomePage() {
                 <Crown className="w-6 h-6 text-primary-foreground" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground">Upgrade to Premium</h3>
+                <h3 className="font-bold text-foreground">Upgrade to Premium</h3>
                 <p className="text-sm text-muted-foreground">
                   Unlock all signals • First month only $25
                 </p>
@@ -183,7 +183,7 @@ export default function HomePage() {
                 <TrendingUp className="w-6 h-6 text-primary-foreground" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground">Get Started</h3>
+                <h3 className="font-bold text-foreground">Get Started</h3>
                 <p className="text-sm text-muted-foreground">
                   Create an account to access trading signals
                 </p>
@@ -196,7 +196,7 @@ export default function HomePage() {
         {/* Latest Signal */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-foreground">Latest Signal</h2>
+            <h2 className="text-lg font-bold text-foreground">Latest Signal</h2>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -233,16 +233,16 @@ export default function HomePage() {
             onClick={() => navigate('/signals')}
           >
             <TrendingUp className="w-8 h-8 text-primary mb-2" />
-            <h3 className="font-medium text-foreground">All Signals</h3>
-            <p className="text-xs text-muted-foreground">View signal history</p>
+            <h3 className="font-bold text-foreground">All Signals</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">View signal history</p>
           </Card>
           <Card 
             className="card-trading p-4 cursor-pointer hover:border-primary/30 transition-colors"
             onClick={() => navigate('/subscription')}
           >
             <Crown className="w-8 h-8 text-primary mb-2" />
-            <h3 className="font-medium text-foreground">Subscription</h3>
-            <p className="text-xs text-muted-foreground">Manage your plan</p>
+            <h3 className="font-bold text-foreground">Subscription</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Manage your plan</p>
           </Card>
         </div>
       </div>
