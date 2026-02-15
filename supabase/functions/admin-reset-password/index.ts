@@ -53,8 +53,8 @@ serve(async (req) => {
       });
     }
 
-    if (newPassword.length < 6) {
-      return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), {
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      return new Response(JSON.stringify({ error: 'Password must be at least 8 characters with an uppercase letter, number, and special character' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
