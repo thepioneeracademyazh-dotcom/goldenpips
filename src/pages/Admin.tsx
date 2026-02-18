@@ -58,7 +58,7 @@ export default function AdminPage() {
 
   // User filter/search state
   const [userSearch, setUserSearch] = useState('');
-  const [userFilter, setUserFilter] = useState<'all' | 'premium' | 'free' | 'blocked'>('all');
+  const [userFilter, setUserFilter] = useState<'all' | 'premium' | 'free' | 'blocked' | 'flagged'>('all');
 
   // Signal form state
   const [signalForm, setSignalForm] = useState({
@@ -588,6 +588,7 @@ export default function AdminPage() {
     if (userFilter === 'premium' && !isPrem) return false;
     if (userFilter === 'free' && (isPrem || isBlocked)) return false;
     if (userFilter === 'blocked' && !isBlocked) return false;
+    if (userFilter === 'flagged' && !(subscription as any)?.flagged_abuse) return false;
 
     // Search
     if (userSearch.trim()) {
@@ -922,7 +923,8 @@ export default function AdminPage() {
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="premium">Premium</SelectItem>
                   <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="blocked">Blocked</SelectItem>
+                   <SelectItem value="blocked">Blocked</SelectItem>
+                   <SelectItem value="flagged">⚠ Flagged</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -975,6 +977,11 @@ export default function AdminPage() {
                         >
                           {isBlocked ? 'Blocked' : isPremium ? 'Premium' : 'Free'}
                         </Badge>
+                        {(subscription as any)?.flagged_abuse && (
+                          <Badge variant="outline" className="bg-orange-500/20 text-orange-500 border-orange-500/30 text-[10px]">
+                            ⚠ Flagged
+                          </Badge>
+                        )}
                         
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

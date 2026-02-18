@@ -41,6 +41,51 @@ export type Database = {
         }
         Relationships: []
       }
+      known_wallets: {
+        Row: {
+          created_at: string
+          id: string
+          payment_id: string | null
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      normalized_emails: {
+        Row: {
+          created_at: string
+          id: string
+          normalized_email: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          normalized_email: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          normalized_email?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -273,6 +318,7 @@ export type Database = {
         Row: {
           created_at: string
           expires_at: string | null
+          flagged_abuse: boolean
           id: string
           is_first_time_user: boolean
           payment_gateway: string | null
@@ -286,6 +332,7 @@ export type Database = {
         Insert: {
           created_at?: string
           expires_at?: string | null
+          flagged_abuse?: boolean
           id?: string
           is_first_time_user?: boolean
           payment_gateway?: string | null
@@ -299,6 +346,7 @@ export type Database = {
         Update: {
           created_at?: string
           expires_at?: string | null
+          flagged_abuse?: boolean
           id?: string
           is_first_time_user?: boolean
           payment_gateway?: string | null
@@ -391,6 +439,7 @@ export type Database = {
       }
       is_premium: { Args: { _user_id: string }; Returns: boolean }
       is_user_blocked: { Args: { _user_id: string }; Returns: boolean }
+      normalize_email: { Args: { raw_email: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"

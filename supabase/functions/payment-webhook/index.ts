@@ -72,6 +72,7 @@ serve(async (req) => {
       payment_status,
       order_id,
       price_amount,
+      payin_address,
     } = body;
 
     // Only process finished payments
@@ -157,6 +158,32 @@ serve(async (req) => {
     }
 
     console.log(`Successfully activated premium for user: ${userId}`);
+
+    // --- Wallet-based abuse detection ---
+    if (payin_address) {
+      // Store wallet mapping
+      await supabase.from('known_wallets').insert({
+        wallet_address: payin_address,
+        user_id: userId,
+        payment_id: payment_id?.toString(),
+      });
+
+      // Check if this wallet was used by a different user
+      const { data: existingWallets } = await supabase
+        .from('known_wallets')
+        .select('user_id')
+        .eq('wallet_address', payin_address)
+        .neq('user_id', userId)
+        .limit(1);
+
+      if (existingWallets && existingWallets.length > 0) {
+        console.log(`Abuse detected: wallet ${payin_address} used by another user`);
+        await supabase
+          .from('subscriptions')
+          .update({ is_first_time_user: false, flagged_abuse: true })
+          .eq('user_id', userId);
+      }
+    }
 
     // Send premium confirmation email (fire-and-forget)
     const { data: profile } = await supabase
