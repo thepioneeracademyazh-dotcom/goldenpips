@@ -10,9 +10,10 @@ interface AppHeaderProps {
   showLogo?: boolean;
   title?: string;
   subtitle?: string;
+  showLiveBadge?: boolean;
 }
 
-export function AppHeader({ showLogo = true, title, subtitle }: AppHeaderProps) {
+export function AppHeader({ showLogo = true, title, subtitle, showLiveBadge = false }: AppHeaderProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -25,7 +26,15 @@ export function AppHeader({ showLogo = true, title, subtitle }: AppHeaderProps) 
             <Logo size="md" />
           ) : (
             <div>
-              <h1 className="text-lg font-bold text-foreground">{title}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold text-foreground">{title}</h1>
+                {showLiveBadge && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-[10px] font-bold uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                    Live
+                  </span>
+                )}
+              </div>
               {subtitle && <p className="text-xs text-muted-foreground -mt-0.5">{subtitle}</p>}
             </div>
           )}

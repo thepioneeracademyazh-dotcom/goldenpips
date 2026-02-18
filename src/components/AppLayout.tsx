@@ -9,6 +9,7 @@ interface AppLayoutProps {
   headerTitle?: string;
   headerSubtitle?: string;
   showLogo?: boolean;
+  showLiveBadge?: boolean;
 }
 
 export function AppLayout({ 
@@ -17,7 +18,8 @@ export function AppLayout({
   showHeader = true,
   headerTitle,
   headerSubtitle,
-  showLogo = true
+  showLogo = true,
+  showLiveBadge = false
 }: AppLayoutProps) {
   return (
     <div className="min-h-screen gradient-bg-premium flex flex-col">
@@ -25,7 +27,8 @@ export function AppLayout({
         <AppHeader 
           showLogo={showLogo} 
           title={headerTitle} 
-          subtitle={headerSubtitle} 
+          subtitle={headerSubtitle}
+          showLiveBadge={showLiveBadge}
         />
       )}
       <main className={showNav ? 'flex-1 pb-20' : 'flex-1'}>
