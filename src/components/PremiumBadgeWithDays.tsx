@@ -1,4 +1,4 @@
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, differenceInHours } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { User } from '@/types';
 
@@ -7,14 +7,16 @@ interface PremiumBadgeWithDaysProps {
 }
 
 export function PremiumBadgeWithDays({ user }: PremiumBadgeWithDaysProps) {
-  const getDaysLeft = () => {
+  const getTimeLeft = () => {
     if (!user.isPremium || !user.subscription?.expires_at) return null;
     const expiryDate = new Date(user.subscription.expires_at);
     const days = differenceInDays(expiryDate, new Date());
-    return days > 0 ? days : 0;
+    if (days >= 1) return { value: days, unit: 'd' };
+    const hours = differenceInHours(expiryDate, new Date());
+    return { value: Math.max(hours, 0), unit: 'h' };
   };
 
-  const daysLeft = getDaysLeft();
+  const timeLeft = getTimeLeft();
 
   if (user.isPremium) {
     return (
@@ -25,18 +27,18 @@ export function PremiumBadgeWithDays({ user }: PremiumBadgeWithDaysProps) {
         >
           👑 Premium
         </Badge>
-        {daysLeft !== null && (
+        {timeLeft !== null && (
           <Badge 
             variant="outline" 
             className={`text-xs font-medium ${
-              daysLeft <= 3 
+              (timeLeft.unit === 'h' || (timeLeft.unit === 'd' && timeLeft.value <= 3))
                 ? 'bg-destructive/20 text-destructive border-destructive/30' 
-                : daysLeft <= 7 
+                : timeLeft.value <= 7 
                   ? 'bg-warning/20 text-warning border-warning/30'
                   : 'bg-muted text-muted-foreground'
             }`}
           >
-            {daysLeft}d left
+            {timeLeft.value}{timeLeft.unit} left
           </Badge>
         )}
       </div>
