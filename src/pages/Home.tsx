@@ -34,28 +34,10 @@ export default function HomePage() {
           schema: 'public',
           table: 'signals',
         },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            // New signal becomes the latest
-            setLatestSignal(payload.new as Signal);
-            fetchStats();
-          } else if (payload.eventType === 'UPDATE') {
-            // Update if it's the current latest signal
-            setLatestSignal(prev => 
-              prev?.id === payload.new.id ? payload.new as Signal : prev
-            );
-            fetchStats();
-          } else if (payload.eventType === 'DELETE') {
-            // If deleted signal was the latest, refetch
-            setLatestSignal(prev => {
-              if (prev?.id === payload.old.id) {
-                fetchLatestSignal();
-                return null;
-              }
-              return prev;
-            });
-            fetchStats();
-          }
+        () => {
+          // Re-fetch from secure view instead of using raw payload
+          fetchLatestSignal();
+          fetchStats();
         }
       )
       .subscribe();
@@ -68,14 +50,14 @@ export default function HomePage() {
   const fetchLatestSignal = async () => {
     try {
       const { data, error } = await supabase
-        .from('signals')
+        .from('signals_secure' as any)
         .select('*')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      setLatestSignal(data as Signal);
+      setLatestSignal(data as unknown as Signal);
     } catch (error) {
       console.error('Error fetching latest signal:', error);
     } finally {
@@ -87,7 +69,7 @@ export default function HomePage() {
     try {
       // Get active signals count
       const { count: activeCount } = await supabase
-        .from('signals')
+        .from('signals_secure' as any)
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
 
@@ -96,16 +78,17 @@ export default function HomePage() {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
       const { data: allSignals } = await supabase
-        .from('signals')
+        .from('signals_secure' as any)
         .select('status')
         .gte('created_at', thirtyDaysAgo.toISOString())
         .neq('status', 'active');
 
-      const successfulCount = allSignals?.filter(
+      const typedSignals = (allSignals as unknown as { status: string }[]) || [];
+      const successfulCount = typedSignals.filter(
         s => s.status === 'tp1_hit' || s.status === 'tp2_hit'
       ).length || 0;
       
-      const totalClosed = allSignals?.length || 0;
+      const totalClosed = typedSignals.length || 0;
       const successRate = totalClosed > 0 ? Math.round((successfulCount / totalClosed) * 100) : 85;
 
       setStats({
