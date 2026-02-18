@@ -72,7 +72,56 @@ serve(async (req) => {
       .limit(1)
       .single();
 
-    const isFirstTimeUser = subscription?.is_first_time_user ?? true;
+    let isFirstTimeUser = subscription?.is_first_time_user ?? true;
+
+    // Email normalization abuse check
+    if (isFirstTimeUser) {
+      // Get user's email
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('user_id', userId)
+        .single();
+
+      if (profile?.email) {
+        // Normalize the email
+        const email = profile.email.toLowerCase();
+        let [localPart, domain] = email.split('@');
+        localPart = localPart.split('+')[0];
+        if (domain === 'gmail.com' || domain === 'googlemail.com') {
+          localPart = localPart.replace(/\./g, '');
+        }
+        const normalizedEmail = `${localPart}@${domain}`;
+
+        // Check if any OTHER account with same normalized email has had a subscription
+        const { data: matches } = await supabase
+          .from('normalized_emails')
+          .select('user_id')
+          .eq('normalized_email', normalizedEmail)
+          .neq('user_id', userId);
+
+        if (matches && matches.length > 0) {
+          // Check if any of those accounts ever had premium
+          const matchedUserIds = matches.map(m => m.user_id);
+          const { data: priorSubs } = await supabase
+            .from('subscriptions')
+            .select('user_id')
+            .in('user_id', matchedUserIds)
+            .eq('is_first_time_user', false);
+
+          if (priorSubs && priorSubs.length > 0) {
+            console.log(`Email abuse detected: ${normalizedEmail} matches existing account`);
+            isFirstTimeUser = false;
+            // Update DB so future checks are fast
+            await supabase
+              .from('subscriptions')
+              .update({ is_first_time_user: false, flagged_abuse: true })
+              .eq('user_id', userId);
+          }
+        }
+      }
+    }
+
     const amount = isFirstTimeUser ? FIRST_TIME_PRICE : REGULAR_PRICE;
     const currency = 'USDT';
 
