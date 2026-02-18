@@ -128,8 +128,8 @@
     @apply border-border;
   }
 
-  html {
-    /* Theme class applied dynamically via useTheme hook */
+  html, body {
+    overscroll-behavior-y: contain;
   }
 
   body {
