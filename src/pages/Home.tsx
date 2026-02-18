@@ -124,9 +124,15 @@ export default function HomePage() {
         <Card className="card-trading p-5 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
           <div className="relative">
-            <h1 className="text-xl font-bold text-foreground mb-0.5 tracking-tight">
-              {user ? `Welcome, ${user.profile?.full_name || user.email.split('@')[0]}!` : 'Welcome to Golden Pips'}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-foreground tracking-tight">
+                {user ? `Welcome, ${user.profile?.full_name || user.email.split('@')[0]}!` : 'Welcome to Golden Pips'}
+              </h1>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-[10px] font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                Live
+              </span>
+            </div>
             <p className="text-muted-foreground text-sm">
               Premium Gold (XAUUSD) Trading Signals
             </p>
