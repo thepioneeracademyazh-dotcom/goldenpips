@@ -128,10 +128,6 @@ export default function HomePage() {
               <h1 className="text-xl font-bold text-foreground tracking-tight">
                 {user ? `Welcome, ${user.profile?.full_name || user.email.split('@')[0]}!` : 'Welcome to Golden Pips'}
               </h1>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-[10px] font-bold uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                Live
-              </span>
             </div>
             <p className="text-muted-foreground text-sm">
               Premium Gold (XAUUSD) Trading Signals
@@ -202,7 +198,13 @@ export default function HomePage() {
         {/* Latest Signal */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-foreground">Latest Signal</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground">Latest Signal</h2>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-[10px] font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                Live
+              </span>
+            </div>
             <Button 
               variant="ghost" 
               size="sm" 
