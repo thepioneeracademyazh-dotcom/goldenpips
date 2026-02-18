@@ -85,7 +85,7 @@ export default function SignalsPage() {
   const closedCount = signals.filter(s => s.status !== 'active').length;
 
   return (
-    <AppLayout showLogo={false} headerTitle="Signals" headerSubtitle="Last 30 days">
+    <AppLayout showLogo={false} headerTitle="Signals" headerSubtitle="Last 30 days" showLiveBadge>
       {/* Sticky Filter Section */}
       <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-xl border-b border-border px-4 py-3 space-y-3">
         {/* Stats Badge */}
