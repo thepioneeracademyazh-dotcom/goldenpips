@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { InstallPWA } from "@/components/InstallPWA";
 import { BlockedScreen } from "@/components/BlockedScreen";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { useTheme } from "@/hooks/use-theme";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
@@ -44,6 +45,7 @@ function AppContent() {
 
   return (
     <>
+      <OfflineBanner />
       <InstallPWA />
       <Toaster />
       <Sonner position="top-center" />
