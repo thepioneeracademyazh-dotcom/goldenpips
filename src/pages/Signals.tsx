@@ -32,16 +32,9 @@ export default function SignalsPage() {
           schema: 'public',
           table: 'signals',
         },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setSignals(prev => [payload.new as Signal, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            setSignals(prev => 
-              prev.map(s => s.id === payload.new.id ? payload.new as Signal : s)
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setSignals(prev => prev.filter(s => s.id !== payload.old.id));
-          }
+        () => {
+          // Re-fetch from secure view instead of using raw payload
+          fetchSignals();
         }
       )
       .subscribe();
@@ -56,13 +49,13 @@ export default function SignalsPage() {
       const thirtyDaysAgo = subDays(new Date(), 30);
       
       const { data, error } = await supabase
-        .from('signals')
+        .from('signals_secure' as any)
         .select('*')
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSignals(data as Signal[]);
+      setSignals((data as unknown as Signal[]) || []);
     } catch (error) {
       console.error('Error fetching signals:', error);
     } finally {

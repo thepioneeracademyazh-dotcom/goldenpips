@@ -83,6 +83,27 @@ serve(async (req) => {
       );
     }
 
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // Idempotency check: skip if payment already completed
+    const { data: existingPayment } = await supabase
+      .from('payment_history')
+      .select('status')
+      .eq('payment_id', payment_id?.toString())
+      .eq('status', 'completed')
+      .maybeSingle();
+
+    if (existingPayment) {
+      console.log(`Payment ${payment_id} already processed - skipping`);
+      return new Response(
+        JSON.stringify({ message: 'Payment already processed' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Extract user ID from order_id (format: golden_pips_{userId}_{timestamp})
     const orderParts = order_id?.split('_');
     if (!orderParts || orderParts.length < 4) {
@@ -96,10 +117,7 @@ serve(async (req) => {
     const userId = orderParts[2];
     console.log(`Processing payment for user: ${userId}`);
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    // supabase client already created above for idempotency check
 
     // Update payment history status
     const { error: paymentError } = await supabase

@@ -334,7 +334,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      signals_secure: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          entry_price: number | null
+          id: string | null
+          notes: string | null
+          signal_type: Database["public"]["Enums"]["signal_type"] | null
+          status: Database["public"]["Enums"]["signal_status"] | null
+          stop_loss: number | null
+          take_profit_1: number | null
+          take_profit_2: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          entry_price?: never
+          id?: string | null
+          notes?: string | null
+          signal_type?: Database["public"]["Enums"]["signal_type"] | null
+          status?: Database["public"]["Enums"]["signal_status"] | null
+          stop_loss?: never
+          take_profit_1?: never
+          take_profit_2?: never
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          entry_price?: never
+          id?: string | null
+          notes?: string | null
+          signal_type?: Database["public"]["Enums"]["signal_type"] | null
+          status?: Database["public"]["Enums"]["signal_status"] | null
+          stop_loss?: never
+          take_profit_1?: never
+          take_profit_2?: never
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_subscription_status: {
