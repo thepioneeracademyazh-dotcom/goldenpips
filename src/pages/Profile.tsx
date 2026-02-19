@@ -187,9 +187,9 @@ export default function ProfilePage() {
                   <h2 className="text-xl font-bold text-foreground tracking-tight">
                     {user.profile?.full_name || 'Set your name'}
                   </h2>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                    <p className="text-muted-foreground text-sm">{user.email}</p>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <Mail className="w-4 h-4 text-primary" />
+                    <p className="text-foreground text-sm font-medium break-all">{user.email}</p>
                   </div>
                   
                   <Badge 
