@@ -8,7 +8,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
@@ -106,59 +105,71 @@ export function NotificationBell() {
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md p-0 gap-0 rounded-xl max-h-[70vh] flex flex-col">
-        <DialogHeader className="p-4 pb-2 flex-shrink-0">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md p-0 gap-0 rounded-xl max-h-[70vh] flex flex-col bg-card border-border shadow-xl">
+        <div className="p-4 pb-3 flex-shrink-0 border-b border-border">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-foreground text-lg font-bold">Notifications</DialogTitle>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <Bell className="w-4 h-4 text-primary" />
+              </div>
+              <DialogTitle className="text-foreground text-base font-bold">Notifications</DialogTitle>
+              {unreadCount > 0 && (
+                <Badge className="h-5 min-w-[20px] px-1.5 bg-primary text-primary-foreground text-[10px] font-bold">
+                  {unreadCount}
+                </Badge>
+              )}
+            </div>
             {unreadCount > 0 && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={markAllAsRead}
-                className="text-primary text-xs"
+                className="text-primary text-xs h-7 px-2"
               >
                 Mark all read
               </Button>
             )}
           </div>
-        </DialogHeader>
+        </div>
         
-        <ScrollArea className="flex-1 overflow-auto px-4 pb-4">
+        <ScrollArea className="flex-1 overflow-auto">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Bell className="w-12 h-12 text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">No notifications yet</p>
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+              <div className="p-3 rounded-full bg-muted mb-3">
+                <Bell className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="font-semibold text-foreground text-sm">No notifications yet</p>
+              <p className="text-xs text-muted-foreground mt-1">
                 You'll see alerts here when new signals arrive
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-border">
               {notifications.map((notification) => {
                 const isUnread = !readIds.has(notification.id);
                 return (
                   <div
                     key={notification.id}
                     onClick={() => markAsRead(notification.id)}
-                    className={`p-4 rounded-xl border cursor-pointer transition-colors ${
-                      isUnread 
-                        ? 'bg-primary/5 border-primary/20' 
-                        : 'bg-muted/30 border-border'
+                    className={`px-4 py-3 cursor-pointer transition-colors hover:bg-muted/50 ${
+                      isUnread ? 'bg-primary/5' : ''
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
+                    <div className="flex items-start gap-2.5">
+                      <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${
                         isUnread ? 'bg-primary' : 'bg-transparent'
                       }`} />
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-foreground text-sm">
-                          {notification.title}
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="font-bold text-foreground text-sm truncate">
+                            {notification.title}
+                          </h4>
+                          <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                            {format(new Date(notification.created_at), 'MMM dd')}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                           {notification.body}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {format(new Date(notification.created_at), 'MMM dd, h:mm a')}
                         </p>
                       </div>
                     </div>
