@@ -109,7 +109,7 @@ export function NotificationBell() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md bg-card border-border">
+      <SheetContent className="w-[340px] sm:w-[380px] bg-card border-border" style={{ height: 'auto', maxHeight: '70vh', top: '60px', bottom: 'auto', borderRadius: '0.75rem' }}>
         <SheetHeader className="pb-4">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-foreground">Notifications</SheetTitle>
