@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { format } from 'date-fns';
 
 interface Notification {
@@ -32,7 +32,6 @@ export function NotificationBell() {
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      // Load read notifications from localStorage
       const stored = localStorage.getItem(`read_notifications_${user.id}`);
       if (stored) {
         setReadIds(new Set(JSON.parse(stored)));
@@ -41,14 +40,12 @@ export function NotificationBell() {
   }, [user]);
 
   useEffect(() => {
-    // Calculate unread count
     const unread = notifications.filter(n => !readIds.has(n.id)).length;
     setUnreadCount(unread);
   }, [notifications, readIds]);
 
   const fetchNotifications = async () => {
     try {
-      // Get notifications based on user's premium status
       const targetAudiences = ['all'];
       if (user?.isPremium) {
         targetAudiences.push('premium');
@@ -96,8 +93,8 @@ export function NotificationBell() {
   if (!user) return null;
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5 text-foreground" />
           {unreadCount > 0 && (
@@ -108,11 +105,11 @@ export function NotificationBell() {
             </Badge>
           )}
         </Button>
-      </SheetTrigger>
-      <SheetContent className="w-[340px] sm:w-[380px] bg-card border-border" style={{ height: 'auto', maxHeight: '70vh', top: '60px', bottom: 'auto', borderRadius: '0.75rem' }}>
-        <SheetHeader className="pb-4">
+      </DialogTrigger>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md p-0 gap-0 rounded-xl max-h-[70vh] flex flex-col">
+        <DialogHeader className="p-4 pb-2 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <SheetTitle className="text-foreground">Notifications</SheetTitle>
+            <DialogTitle className="text-foreground text-lg font-bold">Notifications</DialogTitle>
             {unreadCount > 0 && (
               <Button 
                 variant="ghost" 
@@ -124,9 +121,9 @@ export function NotificationBell() {
               </Button>
             )}
           </div>
-        </SheetHeader>
+        </DialogHeader>
         
-        <ScrollArea className="h-[calc(100vh-120px)]">
+        <ScrollArea className="flex-1 overflow-auto px-4 pb-4">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bell className="w-12 h-12 text-muted-foreground mb-3" />
@@ -136,14 +133,14 @@ export function NotificationBell() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3 pr-4">
+            <div className="space-y-3">
               {notifications.map((notification) => {
                 const isUnread = !readIds.has(notification.id);
                 return (
                   <div
                     key={notification.id}
                     onClick={() => markAsRead(notification.id)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                    className={`p-4 rounded-xl border cursor-pointer transition-colors ${
                       isUnread 
                         ? 'bg-primary/5 border-primary/20' 
                         : 'bg-muted/30 border-border'
@@ -154,7 +151,7 @@ export function NotificationBell() {
                         isUnread ? 'bg-primary' : 'bg-transparent'
                       }`} />
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-foreground text-sm">
+                        <h4 className="font-semibold text-foreground text-sm">
                           {notification.title}
                         </h4>
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -171,7 +168,7 @@ export function NotificationBell() {
             </div>
           )}
         </ScrollArea>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
