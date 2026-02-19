@@ -1,12 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { WifiOff } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function OfflineBanner() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const wasOffline = useRef(false);
 
   useEffect(() => {
-    const handleOffline = () => setIsOffline(true);
-    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => {
+      setIsOffline(true);
+      wasOffline.current = true;
+    };
+    const handleOnline = () => {
+      setIsOffline(false);
+      if (wasOffline.current) {
+        toast.success('Back online', { description: 'Your internet connection has been restored.' });
+        wasOffline.current = false;
+      }
+    };
 
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
