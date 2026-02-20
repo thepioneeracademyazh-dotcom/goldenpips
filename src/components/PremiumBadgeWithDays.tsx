@@ -1,4 +1,4 @@
-import { differenceInDays, differenceInHours } from 'date-fns';
+import { differenceInHours, startOfDay, differenceInCalendarDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { User } from '@/types';
 
@@ -10,10 +10,22 @@ export function PremiumBadgeWithDays({ user }: PremiumBadgeWithDaysProps) {
   const getTimeLeft = () => {
     if (!user.isPremium || !user.subscription?.expires_at) return null;
     const expiryDate = new Date(user.subscription.expires_at);
-    const days = differenceInDays(expiryDate, new Date());
-    if (days >= 1) return { value: days, unit: 'd' };
-    const hours = differenceInHours(expiryDate, new Date());
-    return { value: Math.max(hours, 0), unit: 'h' };
+    const now = new Date();
+    
+    // Use calendar days (midnight-based) for clearer understanding
+    const calendarDays = differenceInCalendarDays(expiryDate, now);
+    
+    if (calendarDays > 0) {
+      return { value: calendarDays, unit: 'day', label: `${calendarDays} day${calendarDays !== 1 ? 's' : ''} left` };
+    }
+    
+    // Last day: show remaining hours
+    const hours = differenceInHours(expiryDate, now);
+    if (hours > 0) {
+      return { value: hours, unit: 'hour', label: `${hours}h left today` };
+    }
+    
+    return { value: 0, unit: 'expired', label: 'Expires today' };
   };
 
   const timeLeft = getTimeLeft();
@@ -31,14 +43,14 @@ export function PremiumBadgeWithDays({ user }: PremiumBadgeWithDaysProps) {
           <Badge 
             variant="outline" 
             className={`text-xs font-medium ${
-              (timeLeft.unit === 'h' || (timeLeft.unit === 'd' && timeLeft.value <= 3))
+              (timeLeft.unit === 'hour' || timeLeft.unit === 'expired' || (timeLeft.unit === 'day' && timeLeft.value <= 3))
                 ? 'bg-destructive/20 text-destructive border-destructive/30' 
                 : timeLeft.value <= 7 
                   ? 'bg-warning/20 text-warning border-warning/30'
                   : 'bg-muted text-muted-foreground'
             }`}
           >
-            {timeLeft.value}{timeLeft.unit} left
+            {timeLeft.label}
           </Badge>
         )}
       </div>
