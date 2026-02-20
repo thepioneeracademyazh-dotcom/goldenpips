@@ -41,10 +41,10 @@ export function AppHeader({ showLogo = true, title, subtitle, showLiveBadge = fa
         </div>
 
         {/* Right: Notification + Badge/SignIn */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           {user && <NotificationBell />}
           {user ? (
-            <PremiumBadgeWithDays user={user} />
+            <PremiumBadgeWithDays user={user} compact />
           ) : (
             <Button 
               variant="outline" 
