@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { InstallButton } from '@/components/InstallPWA';
+import { PremiumBadgeWithDays } from '@/components/PremiumBadgeWithDays';
 export default function ProfilePage() {
   const { isDark, toggleTheme } = useTheme();
   const { user, signOut, refreshUserData } = useAuth();
@@ -187,22 +188,13 @@ export default function ProfilePage() {
                   <h2 className="text-xl font-bold text-foreground tracking-tight">
                     {user.profile?.full_name || 'Set your name'}
                   </h2>
-                  <div className="flex items-center gap-2 mt-2 bg-muted/50 rounded-lg px-3 py-2 w-full">
-                    <Mail className="w-4 h-4 text-primary shrink-0" />
-                    <span className="text-foreground text-sm font-medium break-all select-all">
-                      {user.email || user.profile?.email || 'No email'}
-                    </span>
-                  </div>
+                  <p className="text-sm text-muted-foreground mt-1 break-all">
+                    {user.email || user.profile?.email || 'No email'}
+                  </p>
                   
-                  <Badge 
-                    className={`mt-3 ${user.isPremium 
-                      ? 'bg-primary/20 text-primary border-primary/30' 
-                      : 'bg-muted text-muted-foreground'
-                    }`}
-                    variant="outline"
-                  >
-                    {user.isPremium ? '👑 Premium Member' : 'Free Plan'}
-                  </Badge>
+                  <div className="mt-3">
+                    <PremiumBadgeWithDays user={user} />
+                  </div>
 
                   <Button 
                     variant="ghost" 
