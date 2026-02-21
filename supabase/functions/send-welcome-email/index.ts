@@ -76,6 +76,9 @@ Deno.serve(async (req) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     if (!resendApiKey) throw new Error('Email service not configured');
 
+    const displayName = fullName || email;
+    const plainText = `Welcome to GoldenPips, ${displayName}!\n\nYour account has been successfully created.\n\nName: ${displayName}\nEmail: ${email}\nPlan: Free\nStatus: Verified\n\nYou can now log in and explore our trading signals at https://goldenpips.online\n\nUpgrade to Premium anytime to unlock all signals and exclusive features.\n\nIf you did not create this account, please ignore this email.\n\n- The GoldenPips Team\nhttps://goldenpips.online`;
+
     // Send branded welcome email via Resend
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -86,8 +89,13 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'GoldenPips <noreply@goldenpips.online>',
         to: [email],
-        subject: 'Welcome to GoldenPips Trading Signals! 🎉',
+        subject: 'Welcome to GoldenPips',
         html: buildWelcomeEmailHtml(fullName || '', email),
+        text: plainText,
+        headers: {
+          'List-Unsubscribe': '<mailto:noreply@goldenpips.online?subject=unsubscribe>',
+          'X-Entity-Ref-ID': crypto.randomUUID(),
+        },
       }),
     });
 
