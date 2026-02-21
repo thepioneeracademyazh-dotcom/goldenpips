@@ -21,7 +21,7 @@ export function Logo({ size = 'md', className }: LogoProps) {
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <div className={cn('rounded-full overflow-hidden shrink-0', imgSizes[size])}>
-        <img src="/favicon.png" alt="Golden Pips" className="w-full h-full object-cover" />
+        <img src="/favicon.png" alt="Golden Pips" className="w-full h-full object-cover scale-150" />
       </div>
       <div className={cn(
         'relative font-bold tracking-tight',
