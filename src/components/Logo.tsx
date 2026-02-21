@@ -12,8 +12,15 @@ export function Logo({ size = 'md', className }: LogoProps) {
     lg: 'text-4xl',
   };
 
+  const imgSizes = {
+    sm: 'w-6 h-6',
+    md: 'w-8 h-8',
+    lg: 'w-10 h-10',
+  };
+
   return (
     <div className={cn('flex items-center gap-2', className)}>
+      <img src="/favicon.png" alt="Golden Pips" className={cn('rounded-full', imgSizes[size])} />
       <div className={cn(
         'relative font-bold tracking-tight',
         sizes[size]
