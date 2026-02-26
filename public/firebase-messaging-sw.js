@@ -3,7 +3,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
 
 // ========== PWA CACHING ==========
-const CACHE_NAME = 'goldenpips-v2';
+const CACHE_NAME = 'goldenpips-v3';
 const urlsToCache = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
