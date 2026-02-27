@@ -3,7 +3,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
 
 // ========== PWA CACHING ==========
-const CACHE_NAME = 'goldenpips-v3';
+const CACHE_NAME = 'goldenpips-v4';
 const urlsToCache = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -28,13 +28,31 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  if (!event.request.url.startsWith(self.location.origin)) return;
 
+  const url = new URL(event.request.url);
+
+  // Skip cross-origin requests (Supabase API, Firebase, etc.)
+  if (url.origin !== self.location.origin) return;
+
+  // Skip API-like paths and Supabase/auth related requests
+  if (url.pathname.startsWith('/rest/') || url.pathname.startsWith('/auth/') || url.pathname.startsWith('/api/')) return;
+
+  // For navigation requests (HTML pages), always go network-first and don't cache
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // For static assets (JS, CSS, images), use network-first with cache fallback
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        if (response.ok) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        }
         return response;
       })
       .catch(() => caches.match(event.request))
