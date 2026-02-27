@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Signal, SignalStatus } from '@/types';
+import { withNetworkRetry } from '@/lib/network';
 
 export default function SignalsPage() {
   const { user } = useAuth();
@@ -48,11 +49,13 @@ export default function SignalsPage() {
     try {
       const thirtyDaysAgo = subDays(new Date(), 30);
       
-      const { data, error } = await supabase
-        .from('signals_secure' as any)
-        .select('*')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-        .order('created_at', { ascending: false });
+      const { data, error } = await withNetworkRetry(() =>
+        supabase
+          .from('signals_secure' as any)
+          .select('*')
+          .gte('created_at', thirtyDaysAgo.toISOString())
+          .order('created_at', { ascending: false })
+      );
 
       if (error) throw error;
       setSignals((data as unknown as Signal[]) || []);

@@ -3,6 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, Subscription, UserRole, User } from '@/types';
 import { getFCMToken } from '@/lib/firebase';
+import { withNetworkRetry } from '@/lib/network';
 
 // Request notification permission and save FCM token using Firebase
 async function requestNotificationPermission(userId: string) {
@@ -257,19 +258,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const attemptSignIn = () =>
-      supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-    let { error } = await attemptSignIn();
-
-    // Retry once for transient network failures common on PWA/mobile networks
-    if (error?.message?.includes('Failed to fetch')) {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      ({ error } = await attemptSignIn());
-    }
+    const { error } = await withNetworkRetry(
+      () =>
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        }),
+      1,
+      1200
+    );
 
     if (!error) {
       // Register this device as the active session

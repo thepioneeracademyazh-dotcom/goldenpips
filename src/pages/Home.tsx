@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Signal } from '@/types';
 import { format } from 'date-fns';
+import { withNetworkRetry } from '@/lib/network';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -49,12 +50,14 @@ export default function HomePage() {
 
   const fetchLatestSignal = async () => {
     try {
-      const { data, error } = await supabase
-        .from('signals_secure' as any)
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      const { data, error } = await withNetworkRetry(() =>
+        supabase
+          .from('signals_secure' as any)
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+      );
 
       if (error && error.code !== 'PGRST116') throw error;
       setLatestSignal(data as unknown as Signal);
@@ -68,10 +71,12 @@ export default function HomePage() {
   const fetchStats = async () => {
     try {
       // Get active signals count (avoid HEAD requests due Chrome/PWA intermittent aborts)
-      const { data: activeSignalsData } = await supabase
-        .from('signals_secure' as any)
-        .select('id')
-        .eq('status', 'active');
+      const { data: activeSignalsData } = await withNetworkRetry(() =>
+        supabase
+          .from('signals_secure' as any)
+          .select('id')
+          .eq('status', 'active')
+      );
 
       const activeCount = Array.isArray(activeSignalsData) ? activeSignalsData.length : 0;
 
@@ -79,11 +84,13 @@ export default function HomePage() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const { data: allSignals } = await supabase
-        .from('signals_secure' as any)
-        .select('status')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-        .neq('status', 'active');
+      const { data: allSignals } = await withNetworkRetry(() =>
+        supabase
+          .from('signals_secure' as any)
+          .select('status')
+          .gte('created_at', thirtyDaysAgo.toISOString())
+          .neq('status', 'active')
+      );
 
       const typedSignals = (allSignals as unknown as { status: string }[]) || [];
       const successfulCount = typedSignals.filter(

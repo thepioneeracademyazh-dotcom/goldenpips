@@ -3,6 +3,7 @@ import { Quote } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { DailyQuote as DailyQuoteType } from '@/types';
+import { withNetworkRetry } from '@/lib/network';
 
 export function DailyQuote() {
   const [quote, setQuote] = useState<DailyQuoteType | null>(null);
@@ -34,13 +35,15 @@ export function DailyQuote() {
 
   const fetchQuote = async () => {
     try {
-      const { data, error } = await supabase
-        .from('daily_quotes')
-        .select('*')
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await withNetworkRetry(() =>
+        supabase
+          .from('daily_quotes')
+          .select('*')
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      );
 
       if (error) throw error;
       setQuote(data as DailyQuoteType | null);
