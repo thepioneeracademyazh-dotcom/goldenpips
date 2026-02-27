@@ -257,10 +257,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const attemptSignIn = () =>
+      supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    let { error } = await attemptSignIn();
+
+    // Retry once for transient network failures common on PWA/mobile networks
+    if (error?.message?.includes('Failed to fetch')) {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      ({ error } = await attemptSignIn());
+    }
 
     if (!error) {
       // Register this device as the active session
