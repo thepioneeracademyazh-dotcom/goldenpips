@@ -67,11 +67,13 @@ export default function HomePage() {
 
   const fetchStats = async () => {
     try {
-      // Get active signals count
-      const { count: activeCount } = await supabase
+      // Get active signals count (avoid HEAD requests due Chrome/PWA intermittent aborts)
+      const { data: activeSignalsData } = await supabase
         .from('signals_secure' as any)
-        .select('*', { count: 'exact', head: true })
+        .select('id')
         .eq('status', 'active');
+
+      const activeCount = Array.isArray(activeSignalsData) ? activeSignalsData.length : 0;
 
       // Get successful signals (TP1 or TP2 hit) from last 30 days
       const thirtyDaysAgo = new Date();
