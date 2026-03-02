@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Filter, TrendingUp } from 'lucide-react';
 import { subDays } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-proxy';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { SignalCard } from '@/components/SignalCard';

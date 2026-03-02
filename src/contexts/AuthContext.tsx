@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-proxy';
 import { Profile, Subscription, UserRole, User } from '@/types';
 import { getFCMToken } from '@/lib/firebase';
 import { withNetworkRetry } from '@/lib/network';

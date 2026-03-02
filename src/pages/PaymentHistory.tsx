@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Receipt, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-proxy';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
