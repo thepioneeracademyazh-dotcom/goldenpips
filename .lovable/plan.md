@@ -1,74 +1,57 @@
 
-
-# Prevent First-Time Discount Abuse
+# Fix: Proxy Backend Requests Through Your Custom Domain
 
 ## Problem
-Users can create new accounts each month to exploit the $25 first-time discount repeatedly, losing $24/month per abuser.
+The backend service domain is being blocked by ISPs in India, causing all "Failed to fetch" errors. Your app tries to connect directly to the backend URL, which gets blocked at the network level.
 
-## Solution: Multi-Layer Detection
+## Solution
+Route all backend requests through your own domain (goldenpips.online) using Vercel rewrites. The browser will talk to `goldenpips.online/supabase/...` instead of the blocked domain, and Vercel's servers (which are NOT blocked) will forward those requests.
 
-### Layer 1: Crypto Wallet Tracking (Primary)
-- Create a `known_wallets` table to store wallet addresses from completed payments
-- When the payment webhook fires, extract the payer's wallet address from the NOWPayments payload
-- Before activating premium, check if that wallet has been used on any other account
-- If yes, set `is_first_time_user = false` on the new account (so next payment is $49)
-- Store the wallet-to-user mapping for future checks
-
-### Layer 2: Email Normalization (Secondary)
-- When checking first-time status in the `create-payment` function, normalize the user's email:
-  - Strip dots from Gmail usernames (`j.o.h.n@gmail.com` -> `john@gmail.com`)
-  - Remove `+alias` suffixes (`john+test@gmail.com` -> `john@gmail.com`)
-- Check if any other account with the same normalized email has had a subscription
-- If match found, override `is_first_time_user` to `false`
-
-### Layer 3: Admin Flagging
-- Add a `flagged_abuse` boolean column to subscriptions
-- Automatically flag accounts where wallet or email overlap is detected
-- Surface these in the admin panel for manual review
-
-## Technical Details
-
-### New Database Table: `known_wallets`
 ```text
-known_wallets
- - id (uuid, PK)
- - wallet_address (text, indexed)
- - user_id (uuid)
- - payment_id (text)
- - created_at (timestamptz)
+Browser (India)
+   |
+   v
+goldenpips.online/supabase/*   <-- Your domain (NOT blocked)
+   |
+   v  (Vercel forwards internally)
+   |
+Backend API server             <-- Happens outside India
 ```
-No RLS policies needed (service-role access only from edge functions).
 
-### New Database Table: `normalized_emails`
-```text
-normalized_emails
- - id (uuid, PK)
- - user_id (uuid, unique)
- - normalized_email (text, indexed)
- - created_at (timestamptz)
-```
-No RLS policies needed (service-role access only).
+## Steps
 
-### Edge Function Changes
+### 1. Add Vercel Rewrites
+Update `vercel.json` to forward `/supabase/*` paths to the actual backend URL. This acts as a transparent proxy.
 
-**`payment-webhook/index.ts`**:
-- After verifying the webhook signature, extract `payin_address` (payer wallet) from the NOWPayments payload
-- Insert into `known_wallets` table
-- Check if wallet exists for a different user -- if so, update the current user's `is_first_time_user` to `false` and set `flagged_abuse = true`
+### 2. Create a Proxy-Aware Client Wrapper
+Since the auto-generated client file cannot be edited, create a new wrapper module (`src/lib/supabase-proxy.ts`) that:
+- Creates a new client pointing to your own domain's `/supabase` path instead of the direct backend URL
+- Exports this proxied client
 
-**`create-payment/index.ts`**:
-- Before determining price, normalize the user's email
-- Query `normalized_emails` for matches on other accounts that have had subscriptions
-- If match found, treat as returning user ($49 price)
+### 3. Update All Imports
+Replace all imports of `@/integrations/supabase/client` across the app (~10 files) to use the new proxy-aware client instead. This ensures every database call, auth request, and realtime subscription goes through your domain.
 
-### Schema Change on `subscriptions`
-- Add `flagged_abuse boolean DEFAULT false` column
+### Files Changed
+- `vercel.json` -- add rewrite rule for `/supabase/:path*`
+- `src/lib/supabase-proxy.ts` -- new file, proxy-aware client
+- `src/contexts/AuthContext.tsx` -- update import
+- `src/pages/Home.tsx` -- update import
+- `src/pages/Signals.tsx` -- update import
+- `src/pages/Auth.tsx` -- update import
+- `src/pages/Admin.tsx` -- update import
+- `src/pages/Profile.tsx` -- update import
+- `src/pages/Subscription.tsx` -- update import
+- `src/pages/PaymentHistory.tsx` -- update import
+- `src/components/DailyQuote.tsx` -- update import
+- `src/components/SignalCard.tsx` -- update import
+- `src/components/NotificationBell.tsx` -- update import
+- `src/components/SubscriptionExpiryAlert.tsx` -- update import
+- Any other files importing the client
 
-### Trigger on User Signup
-- Update the `handle_new_user()` database function to also insert a normalized email record into `normalized_emails`
+### Important Notes
+- This only works on the **published** site (goldenpips.online / goldenpips.lovable.app), not in local dev
+- The Lovable preview will continue working as-is since it's not affected by ISP blocks
+- After publishing, users in India will be able to use the app without a VPN
 
-### File Changes Summary
-1. **Database migration** -- create `known_wallets` table, `normalized_emails` table, add `flagged_abuse` column to `subscriptions`, update `handle_new_user()` function
-2. **`supabase/functions/payment-webhook/index.ts`** -- extract wallet, check for abuse, store wallet
-3. **`supabase/functions/create-payment/index.ts`** -- add email normalization check before pricing
-4. **`src/pages/Admin.tsx`** -- surface flagged accounts (if admin panel lists users)
+### Immediate Workaround
+While this fix is being published, you (and your users) can use a **free VPN** (like Cloudflare WARP / 1.1.1.1 app) to bypass the block temporarily.
