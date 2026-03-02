@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Users, TrendingUp, Bell, Edit, Trash2, Save, Loader2, Crown, User, Ban, CheckCircle, UserX, Quote, DollarSign, KeyRound, History, CreditCard, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/AppLayout';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-proxy';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

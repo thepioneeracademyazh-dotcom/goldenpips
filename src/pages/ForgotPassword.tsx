@@ -3,7 +3,7 @@ import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicato
 import { PasswordRequirements, ConfirmPasswordMatch } from '@/components/PasswordRequirements';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-proxy';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

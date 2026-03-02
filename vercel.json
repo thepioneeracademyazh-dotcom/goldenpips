@@ -1,5 +1,10 @@
 {
   "rewrites": [
-    { "source": "/((?!api|icons|manifest.json|sw.js|favicon.ico).*)", "destination": "/" }
+    { "source": "/supabase/rest/:path*", "destination": "https://dwpccjnhtfsaolbomhey.supabase.co/rest/:path*" },
+    { "source": "/supabase/auth/:path*", "destination": "https://dwpccjnhtfsaolbomhey.supabase.co/auth/:path*" },
+    { "source": "/supabase/realtime/:path*", "destination": "https://dwpccjnhtfsaolbomhey.supabase.co/realtime/:path*" },
+    { "source": "/supabase/storage/:path*", "destination": "https://dwpccjnhtfsaolbomhey.supabase.co/storage/:path*" },
+    { "source": "/supabase/functions/:path*", "destination": "https://dwpccjnhtfsaolbomhey.supabase.co/functions/:path*" },
+    { "source": "/((?!api|icons|manifest.json|sw.js|favicon.ico|supabase).*)", "destination": "/" }
   ]
 }

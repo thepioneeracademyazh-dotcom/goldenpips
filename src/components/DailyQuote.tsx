@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Quote } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-proxy';
 import { Card } from '@/components/ui/card';
 import { DailyQuote as DailyQuoteType } from '@/types';
 import { withNetworkRetry } from '@/lib/network';
