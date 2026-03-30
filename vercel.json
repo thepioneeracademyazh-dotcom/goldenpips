@@ -5,6 +5,6 @@
     { "source": "/supabase/realtime/:path*", "destination": "https://dwpccjnhtfsaolbomhey.supabase.co/realtime/:path*" },
     { "source": "/supabase/storage/:path*", "destination": "https://dwpccjnhtfsaolbomhey.supabase.co/storage/:path*" },
     { "source": "/supabase/functions/:path*", "destination": "https://dwpccjnhtfsaolbomhey.supabase.co/functions/:path*" },
-    { "source": "/((?!api|icons|manifest.json|sw.js|favicon.ico|supabase).*)", "destination": "/" }
+    { "source": "/((?!api|icons|manifest.json|sw.js|favicon\\.ico|favicon\\.png|supabase).*)", "destination": "/" }
   ]
 }
