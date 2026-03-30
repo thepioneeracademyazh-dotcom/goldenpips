@@ -30,16 +30,38 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // Try getClaims first, fall back to getUser if unavailable
+    let userId: string;
     const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    
+    try {
+      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+      if (!claimsError && claimsData?.claims?.sub) {
+        userId = claimsData.claims.sub as string;
+      } else {
+        // Fallback to getUser
+        const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+        if (userError || !userData?.user) {
+          console.error('Auth failed - getClaims:', claimsError, 'getUser:', userError);
+          return new Response(
+            JSON.stringify({ error: 'Invalid authentication' }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        userId = userData.user.id;
+      }
+    } catch (authErr) {
+      console.error('Auth exception:', authErr);
+      // Final fallback
+      const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+      if (userError || !userData?.user) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid authentication' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      userId = userData.user.id;
     }
-
-    const userId = claimsData.claims.sub as string;
 
     // Use service role client for data operations
     const supabase = createClient(
