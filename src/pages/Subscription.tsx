@@ -38,23 +38,32 @@ export default function SubscriptionPage() {
     setLoading(true);
     
     try {
-      // Call the edge function to create payment
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {},
       });
 
-      if (error) throw error;
+      if (error) {
+        // Extract message from error context if available
+        const errorBody = error?.context;
+        let msg = 'Failed to initiate payment. Please try again.';
+        if (errorBody && typeof errorBody === 'object') {
+          try {
+            const parsed = await (errorBody as Response).json();
+            if (parsed?.error) msg = parsed.error;
+          } catch {}
+        }
+        throw new Error(msg);
+      }
 
       if (data?.paymentUrl) {
-        // Redirect to NOWPayments checkout
         window.open(data.paymentUrl, '_blank');
         toast.success('Payment page opened. Complete your payment to activate premium.');
       } else {
         throw new Error('Failed to create payment');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment error:', error);
-      toast.error('Failed to initiate payment. Please try again.');
+      toast.error(error?.message || 'Failed to initiate payment. Please try again.');
     } finally {
       setLoading(false);
     }
