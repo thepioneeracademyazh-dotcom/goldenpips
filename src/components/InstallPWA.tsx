@@ -7,25 +7,52 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+// Capture the event globally so it's not lost if it fires before React mounts
+let globalDeferredPrompt: BeforeInstallPromptEvent | null = null;
+let globalInstalled = false;
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e: Event) => {
+    e.preventDefault();
+    globalDeferredPrompt = e as BeforeInstallPromptEvent;
+  });
+  window.addEventListener('appinstalled', () => {
+    globalInstalled = true;
+    globalDeferredPrompt = null;
+  });
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    globalInstalled = true;
+  }
+}
+
 export function InstallPWA() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(globalDeferredPrompt);
+  const [showInstallBanner, setShowInstallBanner] = useState(!!globalDeferredPrompt);
+  const [isInstalled, setIsInstalled] = useState(globalInstalled);
 
   useEffect(() => {
-    // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
       return;
     }
 
+    // Pick up any prompt captured before mount
+    if (globalDeferredPrompt && !deferredPrompt) {
+      setDeferredPrompt(globalDeferredPrompt);
+      setShowInstallBanner(true);
+    }
+
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const evt = e as BeforeInstallPromptEvent;
+      globalDeferredPrompt = evt;
+      setDeferredPrompt(evt);
       setShowInstallBanner(true);
     };
 
     const handleAppInstalled = () => {
+      globalInstalled = true;
+      globalDeferredPrompt = null;
       setIsInstalled(true);
       setShowInstallBanner(false);
       setDeferredPrompt(null);
@@ -42,14 +69,13 @@ export function InstallPWA() {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    
     if (outcome === 'accepted') {
       setShowInstallBanner(false);
     }
     setDeferredPrompt(null);
+    globalDeferredPrompt = null;
   };
 
   const handleDismiss = () => {
@@ -90,9 +116,9 @@ export function InstallPWA() {
 }
 
 export const InstallButton = forwardRef<HTMLButtonElement>((_, ref) => {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [canInstall, setCanInstall] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(globalDeferredPrompt);
+  const [isInstalled, setIsInstalled] = useState(globalInstalled);
+  const [canInstall, setCanInstall] = useState(!!globalDeferredPrompt);
 
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
@@ -100,13 +126,22 @@ export const InstallButton = forwardRef<HTMLButtonElement>((_, ref) => {
       return;
     }
 
+    if (globalDeferredPrompt && !deferredPrompt) {
+      setDeferredPrompt(globalDeferredPrompt);
+      setCanInstall(true);
+    }
+
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const evt = e as BeforeInstallPromptEvent;
+      globalDeferredPrompt = evt;
+      setDeferredPrompt(evt);
       setCanInstall(true);
     };
 
     const handleAppInstalled = () => {
+      globalInstalled = true;
+      globalDeferredPrompt = null;
       setIsInstalled(true);
       setCanInstall(false);
       setDeferredPrompt(null);
@@ -123,20 +158,16 @@ export const InstallButton = forwardRef<HTMLButtonElement>((_, ref) => {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    
     if (outcome === 'accepted') {
       console.log('App installed');
     }
     setDeferredPrompt(null);
+    globalDeferredPrompt = null;
   };
 
-  // Don't render anything if app is installed or can't be installed
-  if (isInstalled || !canInstall) {
-    return null;
-  }
+  if (isInstalled || !canInstall) return null;
 
   return (
     <Button ref={ref} onClick={handleInstallClick} className="w-full">
