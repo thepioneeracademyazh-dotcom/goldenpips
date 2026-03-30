@@ -30,16 +30,38 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // Try getClaims first, fall back to getUser if unavailable
+    let userId: string;
     const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    
+    try {
+      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+      if (!claimsError && claimsData?.claims?.sub) {
+        userId = claimsData.claims.sub as string;
+      } else {
+        // Fallback to getUser
+        const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+        if (userError || !userData?.user) {
+          console.error('Auth failed - getClaims:', claimsError, 'getUser:', userError);
+          return new Response(
+            JSON.stringify({ error: 'Invalid authentication' }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        userId = userData.user.id;
+      }
+    } catch (authErr) {
+      console.error('Auth exception:', authErr);
+      // Final fallback
+      const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+      if (userError || !userData?.user) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid authentication' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      userId = userData.user.id;
     }
-
-    const userId = claimsData.claims.sub as string;
 
     // Use service role client for data operations
     const supabase = createClient(
@@ -140,6 +162,10 @@ serve(async (req) => {
     }
 
     // Create payment via NOWPayments API
+    console.log('Creating NOWPayments invoice for user:', userId, 'amount:', amount);
+    
+    const origin = req.headers.get('origin') || 'https://goldenpips.online';
+    
     const paymentResponse = await fetch('https://api.nowpayments.io/v1/invoice', {
       method: 'POST',
       headers: {
@@ -153,26 +179,34 @@ serve(async (req) => {
         order_id: `golden_pips_${userId}_${Date.now()}`,
         order_description: 'Golden Pips Premium Subscription - 30 Days',
         ipn_callback_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/payment-webhook`,
-        success_url: `${req.headers.get('origin')}/subscription?success=true`,
-        cancel_url: `${req.headers.get('origin')}/subscription?cancelled=true`,
+        success_url: `${origin}/subscription?success=true`,
+        cancel_url: `${origin}/subscription?cancelled=true`,
       }),
     });
 
     const paymentData = await paymentResponse.json();
+    console.log('NOWPayments response status:', paymentResponse.status, 'data:', JSON.stringify(paymentData));
 
     if (!paymentResponse.ok) {
-      console.error('NOWPayments error:', paymentData);
-      throw new Error(paymentData.message || 'Failed to create payment');
+      console.error('NOWPayments error:', JSON.stringify(paymentData));
+      return new Response(
+        JSON.stringify({ error: paymentData.message || 'Payment gateway error. Please try again.' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Save payment record
-    await supabase.from('payment_history').insert({
+    const { error: insertError } = await supabase.from('payment_history').insert({
       user_id: userId,
       amount,
       currency,
-      payment_id: paymentData.id,
+      payment_id: String(paymentData.id),
       status: 'pending',
     });
+    
+    if (insertError) {
+      console.error('Failed to save payment record:', insertError);
+    }
 
     return new Response(
       JSON.stringify({ 
