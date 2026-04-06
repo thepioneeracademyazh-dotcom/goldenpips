@@ -30,38 +30,16 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Try getClaims first, fall back to getUser if unavailable
-    let userId: string;
-    const token = authHeader.replace('Bearer ', '');
-    
-    try {
-      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-      if (!claimsError && claimsData?.claims?.sub) {
-        userId = claimsData.claims.sub as string;
-      } else {
-        // Fallback to getUser
-        const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
-        if (userError || !userData?.user) {
-          console.error('Auth failed - getClaims:', claimsError, 'getUser:', userError);
-          return new Response(
-            JSON.stringify({ error: 'Invalid authentication' }),
-            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        userId = userData.user.id;
-      }
-    } catch (authErr) {
-      console.error('Auth exception:', authErr);
-      // Final fallback
-      const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
-      if (userError || !userData?.user) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid authentication' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      userId = userData.user.id;
+    const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !userData?.user) {
+      console.error('Auth failed:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+    const userId = userData.user.id;
+    console.log('Authenticated user:', userId);
 
     // Use service role client for data operations
     const supabase = createClient(
@@ -98,7 +76,6 @@ serve(async (req) => {
 
     // Email normalization abuse check
     if (isFirstTimeUser) {
-      // Get user's email
       const { data: profile } = await supabase
         .from('profiles')
         .select('email')
@@ -106,7 +83,6 @@ serve(async (req) => {
         .single();
 
       if (profile?.email) {
-        // Normalize the email
         const email = profile.email.toLowerCase();
         let [localPart, domain] = email.split('@');
         localPart = localPart.split('+')[0];
@@ -115,7 +91,6 @@ serve(async (req) => {
         }
         const normalizedEmail = `${localPart}@${domain}`;
 
-        // Check if any OTHER account with same normalized email has had a subscription
         const { data: matches } = await supabase
           .from('normalized_emails')
           .select('user_id')
@@ -123,7 +98,6 @@ serve(async (req) => {
           .neq('user_id', userId);
 
         if (matches && matches.length > 0) {
-          // Check if any of those accounts ever had premium
           const matchedUserIds = matches.map(m => m.user_id);
           const { data: priorSubs } = await supabase
             .from('subscriptions')
@@ -134,7 +108,6 @@ serve(async (req) => {
           if (priorSubs && priorSubs.length > 0) {
             console.log(`Email abuse detected: ${normalizedEmail} matches existing account`);
             isFirstTimeUser = false;
-            // Update DB so future checks are fast
             await supabase
               .from('subscriptions')
               .update({ is_first_time_user: false, flagged_abuse: true })
@@ -150,14 +123,10 @@ serve(async (req) => {
     const nowpaymentsApiKey = Deno.env.get('NOWPAYMENTS_API_KEY');
     
     if (!nowpaymentsApiKey) {
-      console.log('NOWPayments API key not configured - returning mock payment URL');
+      console.error('NOWPayments API key not configured');
       return new Response(
-        JSON.stringify({ 
-          paymentUrl: `https://nowpayments.io/payment/?amount=${amount}&currency=usdtbsc`,
-          paymentId: `mock_${Date.now()}`,
-          message: 'NOWPayments API key not configured. Configure NOWPAYMENTS_API_KEY secret for live payments.'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Payment gateway not configured. Please contact support.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
