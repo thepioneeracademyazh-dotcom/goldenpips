@@ -21,6 +21,25 @@ const premiumFeatures = [
 export default function SubscriptionPage() {
   const { user, refreshUserData } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  // Auto-refresh user data when returning from payment
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      toast.success('Payment received! Activating your subscription...');
+      // Poll for subscription activation (webhook may take a few seconds)
+      let attempts = 0;
+      const poll = setInterval(async () => {
+        attempts++;
+        await refreshUserData();
+        if (attempts >= 10) clearInterval(poll);
+      }, 3000);
+      return () => clearInterval(poll);
+    }
+    if (searchParams.get('cancelled') === 'true') {
+      toast.info('Payment was cancelled.');
+    }
+  }, [searchParams, refreshUserData]);
 
   const isFirstTimeUser = user?.subscription?.is_first_time_user ?? true;
   const price = isFirstTimeUser ? 25 : 49;
