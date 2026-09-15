@@ -11,6 +11,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useTheme } from "@/hooks/use-theme";
 import Home from "./pages/Home";
+import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Signals from "./pages/Signals";
 import Subscription from "./pages/Subscription";
