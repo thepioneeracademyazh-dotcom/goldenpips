@@ -40,7 +40,9 @@ type AuthStep = 'form' | 'otp-signup';
 const RESEND_COOLDOWN = 60;
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(
+    () => !new URLSearchParams(window.location.search).get('mode')?.includes('signup')
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
