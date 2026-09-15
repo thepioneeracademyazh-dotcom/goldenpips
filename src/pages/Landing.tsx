@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
@@ -8,10 +9,14 @@ import {
   Clock,
   ArrowRight,
   Check,
+  Quote,
+  Star,
+  ChevronDown,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const features = [
   {
@@ -42,6 +47,32 @@ const planPoints = [
   'Push alerts on every new setup',
   'Complete signal history access',
 ];
+
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card className="card-trading overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-5 text-left"
+      >
+        <span className="font-semibold text-foreground text-sm">{question}</span>
+        <ChevronDown
+          className={cn(
+            'w-4 h-4 text-muted-foreground transition-transform duration-200',
+            open && 'rotate-180'
+          )}
+        />
+      </button>
+      {open && (
+        <div className="px-5 pb-5">
+          <p className="text-sm text-muted-foreground leading-relaxed">{answer}</p>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -171,6 +202,133 @@ export default function LandingPage() {
                     <p className="text-sm text-muted-foreground">{item.text}</p>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Signal Benefits */}
+        <section className="px-4 py-12">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-foreground text-center">
+              Why our signals work
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground text-center max-w-lg mx-auto">
+              Clear rules, disciplined risk, and instant delivery.
+            </p>
+            <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                {
+                  title: 'Entry, stop & target',
+                  desc: 'Every signal includes exact entry price, stop loss and two take-profit levels.',
+                },
+                {
+                  title: 'Real-time updates',
+                  desc: 'Signals update instantly when targets hit or the setup is closed.',
+                },
+                {
+                  title: 'Risk first',
+                  desc: 'We share position risk before reward so you stay in control.',
+                },
+                {
+                  title: '24/5 coverage',
+                  desc: 'Active during gold market hours so you never miss a move.',
+                },
+                {
+                  title: 'Mobile alerts',
+                  desc: 'Push notifications the moment a signal goes live.',
+                },
+                {
+                  title: 'Full history',
+                  desc: 'Review every past signal and learn from transparent results.',
+                },
+              ].map((benefit) => (
+                <Card key={benefit.title} className="card-trading p-5">
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-bold text-foreground">{benefit.title}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{benefit.desc}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="px-4 py-12 bg-muted/20">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-foreground text-center">
+              What traders say
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground text-center max-w-lg mx-auto">
+              Real feedback from our community.
+            </p>
+            <div className="mt-8 grid sm:grid-cols-3 gap-4">
+              {[
+                {
+                  name: 'Rahul M.',
+                  quote:
+                    'The XAUUSD signals are precise. I finally have a clear entry and stop for every trade.',
+                },
+                {
+                  name: 'Priya S.',
+                  quote:
+                    'Alerts come right on time. The risk-first approach helped me protect my capital.',
+                },
+                {
+                  name: 'Amit K.',
+                  quote:
+                    'Clean setup, no noise. The daily quote and live updates keep me focused.',
+                },
+              ].map((t) => (
+                <Card key={t.name} className="card-trading p-5 relative">
+                  <Quote className="w-6 h-6 text-primary/40 absolute top-4 right-4" />
+                  <div className="flex items-center gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 text-primary fill-primary" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed">"{t.quote}"</p>
+                  <p className="mt-4 text-xs font-semibold text-primary">{t.name}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="px-4 py-12">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl font-bold text-foreground text-center">
+              Frequently asked questions
+            </h2>
+            <div className="mt-8 space-y-3">
+              {[
+                {
+                  q: 'Which market do the signals cover?',
+                  a: 'All signals are for XAUUSD (gold vs US dollar) — the most liquid gold pair.',
+                },
+                {
+                  q: 'How do I receive new signals?',
+                  a: 'New signals appear instantly in the app and you get a push notification if enabled.',
+                },
+                {
+                  q: 'Can I cancel my subscription?',
+                  a: 'Yes, your premium access continues until the expiry date and is not auto-renewed.',
+                },
+                {
+                  q: 'Do you offer refunds?',
+                  a: 'Payments are final once the plan is activated. Contact support if you face a technical issue.',
+                },
+                {
+                  q: 'Is this financial advice?',
+                  a: 'No. Signals are for educational purposes only. Always trade according to your own risk tolerance.',
+                },
+              ].map((faq) => (
+                <FaqItem key={faq.q} question={faq.q} answer={faq.a} />
               ))}
             </div>
           </div>
