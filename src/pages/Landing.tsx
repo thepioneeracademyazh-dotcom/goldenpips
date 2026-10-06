@@ -387,8 +387,12 @@ export default function LandingPage() {
                 </Card>
               ))}
             </div>
+            <p className="mt-4 text-center text-xs italic text-muted-foreground">
+              Placeholder reviews shown for preview — replace with real customer feedback before publishing.
+            </p>
           </div>
         </section>
+
 
         {/* FAQ */}
         <section className="px-4 py-12">
