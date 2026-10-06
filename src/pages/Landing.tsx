@@ -259,11 +259,100 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Sample Signal Preview */}
+        <section className="px-4 py-12">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-foreground text-center">
+              See what you unlock
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground text-center max-w-lg mx-auto">
+              Free members can see when signals go live — premium members get the full trade plan.
+            </p>
+
+            <div className="mt-8 grid sm:grid-cols-2 gap-4">
+              {/* Free view */}
+              <Card className="card-trading p-4 relative overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-buy/20">
+                      <TrendingUp className="w-5 h-5 text-buy" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-lg text-buy">BUY</span>
+                      <span className="text-muted-foreground text-sm ml-2">XAUUSD</span>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold uppercase tracking-wider">
+                    <Eye className="w-3 h-3" /> Free view
+                  </span>
+                </div>
+                <div className="relative">
+                  <div className="blur-sm opacity-50 select-none">
+                    {[
+                      ['Entry Price', '2,350.00'],
+                      ['Stop Loss', '2,342.00'],
+                      ['Take Profit 1', '2,368.00'],
+                      ['Take Profit 2', '2,385.00'],
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">{label}</span>
+                        <span className="font-mono font-bold text-foreground text-[15px]">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-sm rounded-lg">
+                    <Lock className="w-7 h-7 text-primary mb-1.5" />
+                    <p className="text-sm font-bold text-foreground">Prices locked</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Upgrade to view the full plan</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Signal type, direction and timing are always free.
+                </p>
+              </Card>
+
+              {/* Premium view */}
+              <Card className="card-trading p-4 border-primary/30 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-buy" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-buy/20">
+                      <TrendingUp className="w-5 h-5 text-buy" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-lg text-buy">BUY</span>
+                      <span className="text-muted-foreground text-sm ml-2">XAUUSD</span>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full gradient-gold text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
+                    <Crown className="w-3 h-3" /> Premium view
+                  </span>
+                </div>
+                {[
+                  ['Entry Price', '2,350.00'],
+                  ['Stop Loss', '2,342.00'],
+                  ['Take Profit 1', '2,368.00'],
+                  ['Take Profit 2', '2,385.00'],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                    <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">{label}</span>
+                    <span className="font-mono font-bold text-foreground text-[15px]">{value}</span>
+                  </div>
+                ))}
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Exact entry, stop loss and both targets — updated live as the trade moves.
+                </p>
+              </Card>
+            </div>
+          </div>
+        </section>
+
         {/* Testimonials */}
         <section className="px-4 py-12 bg-muted/20">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl font-bold text-foreground text-center">
               What traders say
+
             </h2>
             <p className="mt-2 text-sm text-muted-foreground text-center max-w-lg mx-auto">
               Real feedback from our community.
