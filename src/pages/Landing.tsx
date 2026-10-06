@@ -429,45 +429,123 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Premium */}
+        {/* Pricing */}
         <section className="px-4 py-12 bg-muted/20">
-          <div className="max-w-xl mx-auto">
-            <Card className="card-trading p-6 border-primary/30 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
-              <div className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-xl gradient-gold">
-                    <Crown className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Premium Membership</h3>
-                    <p className="text-sm text-muted-foreground">Full access to every gold signal</p>
-                  </div>
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-foreground text-center">
+              Simple, transparent pricing
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground text-center max-w-lg mx-auto">
+              Pay monthly in USDT. No auto-renewal — your access simply runs until expiry.
+            </p>
+
+            <div className="mt-8 grid sm:grid-cols-2 gap-4 items-stretch">
+              {/* Free plan */}
+              <Card className="card-trading p-6 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-foreground text-lg">Free</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px] font-bold uppercase tracking-wider">
+                    Get started
+                  </span>
                 </div>
-
-                <ul className="mt-5 space-y-2.5">
-                  {planPoints.map((point) => (
-                    <li key={point} className="flex items-center gap-2.5 text-sm text-foreground">
-                      <Check className="w-4 h-4 text-success stroke-[3] shrink-0" />
-                      {point}
-                    </li>
-                  ))}
+                <div className="mt-3 flex items-end gap-1">
+                  <span className="text-3xl font-extrabold text-foreground">$0</span>
+                  <span className="text-sm text-muted-foreground mb-1">/ forever</span>
+                </div>
+                <ul className="mt-5 space-y-2.5 flex-1">
+                  {[
+                    'See all live signals in real time',
+                    'Signal direction & timing',
+                    'Push notifications on new signals',
+                    'Basic signal history',
+                    { text: 'Entry, stop loss & targets', locked: true },
+                    { text: 'Full performance history', locked: true },
+                  ].map((point) => {
+                    const isLocked = typeof point === 'object';
+                    return (
+                      <li key={typeof point === 'string' ? point : point.text} className="flex items-center gap-2.5 text-sm">
+                        {isLocked ? (
+                          <>
+                            <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <span className="text-muted-foreground line-through">{point.text}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-4 h-4 text-success stroke-[3] shrink-0" />
+                            <span className="text-foreground">{point}</span>
+                          </>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
-
                 <Button
                   size="lg"
+                  variant="outline"
                   onClick={() => navigate('/auth?mode=signup')}
-                  className="mt-6 w-full gradient-gold text-primary-foreground font-bold"
+                  className="mt-6 w-full border-primary/30 text-primary hover:bg-primary/10 font-semibold"
                 >
-                  Get started
+                  Create free account
                 </Button>
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                  <Clock className="w-3.5 h-3.5" /> Cancel anytime — no lock-in
-                </p>
-              </div>
-            </Card>
+              </Card>
+
+              {/* Premium plan */}
+              <Card className="card-trading p-6 border-primary/40 relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 left-0 right-0 h-1 gradient-gold" />
+                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
+                <div className="relative flex flex-col flex-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-5 h-5 text-primary" />
+                      <h3 className="font-bold text-foreground text-lg">Premium</h3>
+                    </div>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full gradient-gold text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
+                      Best value
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex items-end gap-2">
+                    <span className="text-3xl font-extrabold text-gradient-gold">$49</span>
+                    <span className="text-sm text-muted-foreground mb-1">/ month</span>
+                  </div>
+                  <p className="mt-1.5 inline-flex items-center gap-1.5 w-fit px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold">
+                    <Clock className="w-3.5 h-3.5" />
+                    First month only <span className="font-extrabold">$25</span> — save $24
+                  </p>
+
+                  <ul className="mt-5 space-y-2.5 flex-1">
+                    {planPoints.map((point) => (
+                      <li key={point} className="flex items-center gap-2.5 text-sm text-foreground">
+                        <Check className="w-4 h-4 text-success stroke-[3] shrink-0" />
+                        {point}
+                      </li>
+                    ))}
+                    <li className="flex items-center gap-2.5 text-sm text-foreground">
+                      <Check className="w-4 h-4 text-success stroke-[3] shrink-0" />
+                      Priority support
+                    </li>
+                  </ul>
+
+                  <Button
+                    size="lg"
+                    onClick={() => navigate('/auth?mode=signup')}
+                    className="mt-6 w-full gradient-gold text-primary-foreground font-bold glow-gold-sm"
+                  >
+                    Get Premium <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
+                  <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                    <ShieldCheck className="w-3.5 h-3.5" /> No auto-renewal — cancel anytime
+                  </p>
+                </div>
+              </Card>
+            </div>
+
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              Payments are made in USDT (BEP20) via our secure crypto checkout.
+            </p>
           </div>
         </section>
+
 
         {/* Final CTA */}
         <section className="px-4 py-14 text-center">
