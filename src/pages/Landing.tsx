@@ -9,6 +9,8 @@ import {
   Clock,
   ArrowRight,
   Check,
+  Lock,
+  Eye,
   Quote,
   Star,
   ChevronDown,
