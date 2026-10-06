@@ -61,7 +61,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Card className="card-trading overflow-hidden">
+    <Card className="card-trading glass-card overflow-hidden transition-all duration-300 hover:border-primary/30">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between p-5 text-left"
@@ -235,7 +235,7 @@ export default function LandingPage() {
 
             <div className="mt-8 grid sm:grid-cols-2 gap-4">
               {features.map((feature) => (
-                <Card key={feature.title} className="card-trading p-5">
+                <Card key={feature.title} className="card-trading glass-card p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/25">
                   <div className="p-2.5 rounded-xl bg-primary/10 w-fit">
                     <feature.icon className="w-6 h-6 text-primary stroke-[2.5]" />
                   </div>
@@ -307,7 +307,7 @@ export default function LandingPage() {
                   desc: 'Review every past signal and learn from transparent results.',
                 },
               ].map((benefit) => (
-                <Card key={benefit.title} className="card-trading p-5">
+                <Card key={benefit.title} className="card-trading glass-card p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/25">
                   <div className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-success shrink-0 mt-0.5" />
                     <div>
@@ -333,7 +333,7 @@ export default function LandingPage() {
 
             <div className="mt-8 grid sm:grid-cols-2 gap-4">
               {/* Free view */}
-              <Card className="card-trading p-4 relative overflow-hidden">
+              <Card className="card-trading glass-card p-4 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-buy/20">
@@ -374,7 +374,7 @@ export default function LandingPage() {
               </Card>
 
               {/* Premium view */}
-              <Card className="card-trading p-4 border-primary/30 relative overflow-hidden">
+              <Card className="card-trading glass-card p-4 border-primary/30 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-buy" />
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -437,7 +437,7 @@ export default function LandingPage() {
                     'Clean setup, no noise. The daily quote and live updates keep me focused.',
                 },
               ].map((t) => (
-                <Card key={t.name} className="card-trading p-5 relative">
+                <Card key={t.name} className="card-trading glass-card p-5 relative transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/25">
                   <Quote className="w-6 h-6 text-primary/40 absolute top-4 right-4" />
                   <div className="flex items-center gap-1 mb-3">
                     {[...Array(5)].map((_, i) => (
@@ -503,7 +503,7 @@ export default function LandingPage() {
 
             <div className="mt-8 grid sm:grid-cols-2 gap-4 items-stretch">
               {/* Free plan */}
-              <Card className="card-trading p-6 flex flex-col">
+              <Card className="card-trading glass-card p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-foreground text-lg">Free</h3>
                   <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px] font-bold uppercase tracking-wider">
@@ -552,7 +552,7 @@ export default function LandingPage() {
               </Card>
 
               {/* Premium plan */}
-              <Card className="card-trading p-6 border-primary/40 relative overflow-hidden flex flex-col">
+              <Card className="card-trading glass-card p-6 border-primary/40 relative overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
                 <div className="absolute top-0 left-0 right-0 h-1 gradient-gold" />
                 <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
                 <div className="relative flex flex-col flex-1">
@@ -610,7 +610,8 @@ export default function LandingPage() {
 
 
         {/* Final CTA */}
-        <section className="px-4 py-14 text-center">
+        <section className="relative overflow-hidden px-4 py-14 text-center">
+          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-96 h-40 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
           <h2 className="text-2xl font-bold text-foreground">Ready to trade smarter?</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Join GoldenPips and get your next gold signal as it happens.
