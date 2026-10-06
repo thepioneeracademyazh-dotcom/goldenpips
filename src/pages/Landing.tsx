@@ -50,6 +50,13 @@ const planPoints = [
   'Complete signal history access',
 ];
 
+const tickerItems = [
+  { sym: 'XAUUSD', price: '$2,347.80', change: '+0.62%', up: true },
+  { sym: 'GOLD', price: 'Live signals active', change: '', up: false },
+  { sym: 'XAGUSD', price: '$27.42', change: '+1.08%', up: true },
+  { sym: 'DXY', price: '104.26', change: '-0.12%', up: false },
+];
+
 function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
 
@@ -81,6 +88,23 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Ticker tape */}
+      <div className="bg-foreground text-background py-1.5 overflow-hidden">
+        <div className="ticker-track whitespace-nowrap text-[10px] font-medium tracking-widest uppercase">
+          {[...tickerItems, ...tickerItems].map((t, i) => (
+            <span key={i} className="mx-6 inline-flex items-center gap-2">
+              <span className="opacity-70 font-bold">{t.sym}</span>
+              <span className="text-primary font-bold">{t.price}</span>
+              {t.change && (
+                <span className={t.up ? 'text-success font-semibold' : 'text-destructive font-semibold'}>
+                  {t.change}
+                </span>
+              )}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border safe-area-top">
         <div className="max-w-5xl mx-auto flex items-center justify-between h-16 px-4">
@@ -108,21 +132,39 @@ export default function LandingPage() {
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden px-4 pt-14 pb-16">
-          <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-32 -left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-primary/25 rounded-full blur-[120px] animate-float-drift" />
+          <div className="absolute -bottom-32 -left-20 w-80 h-80 bg-primary/15 rounded-full blur-[120px]" />
+          {/* Subtle chart line & candlestick motifs */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.05]" aria-hidden="true">
+            <svg className="w-full h-full" viewBox="0 0 1000 600" preserveAspectRatio="none">
+              <path d="M0 470 L140 430 L280 460 L430 340 L560 380 L720 260 L860 300 L1000 180" stroke="hsl(var(--gold))" strokeWidth="2" fill="none" />
+              <path d="M0 560 L160 500 L320 530 L480 420 L640 450 L800 330 L1000 260" stroke="hsl(var(--gold))" strokeWidth="2" fill="none" opacity="0.5" />
+              <g fill="hsl(var(--gold))">
+                <rect x="120" y="90" width="4" height="46" />
+                <rect x="114" y="102" width="16" height="22" />
+                <rect x="190" y="60" width="4" height="60" />
+                <rect x="184" y="74" width="16" height="30" />
+                <rect x="260" y="110" width="4" height="40" />
+                <rect x="254" y="120" width="16" height="20" />
+              </g>
+            </svg>
+          </div>
 
           <div className="relative max-w-3xl mx-auto text-center">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-success/15 text-success text-[11px] font-bold uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold uppercase tracking-[0.2em]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+              </span>
               Live gold signals
             </span>
 
-            <h1 className="mt-5 text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
-              Trade gold with <span className="text-gradient-gold">confidence</span>
+            <h1 className="mt-5 text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
+              Trade gold with <span className="text-shimmer-gold">confidence</span>
             </h1>
 
             <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
-              GoldenPips delivers precise XAUUSD trading signals with clear entries,
+              GoldenPips delivers precise <span className="font-bold text-foreground">XAUUSD</span> trading signals with clear entries,
               stop loss and targets — straight to your phone in real time.
             </p>
 
@@ -130,7 +172,7 @@ export default function LandingPage() {
               <Button
                 size="lg"
                 onClick={() => navigate('/auth?mode=signup')}
-                className="w-full sm:w-auto gradient-gold text-primary-foreground font-bold glow-gold-sm"
+                className="w-full sm:w-auto gold-sheen gradient-gold text-primary-foreground font-bold glow-gold-sm hover:scale-[1.03] transition-transform"
               >
                 Create free account <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
@@ -138,20 +180,40 @@ export default function LandingPage() {
                 size="lg"
                 variant="outline"
                 onClick={() => navigate('/auth')}
-                className="w-full sm:w-auto border-primary/30 text-primary hover:bg-primary/10 font-semibold"
+                className="w-full sm:w-auto border-primary/30 text-primary hover:bg-primary/10 font-semibold hover:scale-[1.03] transition-transform"
               >
                 Log in
               </Button>
             </div>
 
-            <div className="mt-10 grid grid-cols-3 gap-3 max-w-md mx-auto">
+            <div className="mt-12 grid grid-cols-3 gap-3 max-w-md mx-auto">
               {[
-                { value: 'XAUUSD', label: 'Focused pair' },
-                { value: '24/5', label: 'Market cover' },
-                { value: 'Live', label: 'Signal updates' },
+                { value: 'XAUUSD', label: 'Focused pair', deco: 'bars' },
+                { value: '24/5', label: 'Market cover', deco: 'clock' },
+                { value: 'Live', label: 'Signal updates', deco: 'dot' },
               ].map((stat) => (
-                <div key={stat.label} className="bg-muted/50 rounded-xl p-3 text-center">
-                  <p className="text-base font-extrabold text-primary">{stat.value}</p>
+                <div
+                  key={stat.label}
+                  className="glass-card rounded-2xl p-3 text-center transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  <div className="h-6 flex items-center justify-center">
+                    {stat.deco === 'bars' && (
+                      <div className="flex items-end gap-0.5">
+                        {[2, 3.5, 2.5, 4].map((h, i) => (
+                          <span
+                            key={i}
+                            className="w-1 rounded-sm bg-primary/70"
+                            style={{ height: `${h * 4}px` }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {stat.deco === 'clock' && <Clock className="w-4 h-4 text-primary/50" />}
+                    {stat.deco === 'dot' && (
+                      <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                    )}
+                  </div>
+                  <p className="mt-1 text-base font-extrabold text-primary">{stat.value}</p>
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mt-0.5">
                     {stat.label}
                   </p>
