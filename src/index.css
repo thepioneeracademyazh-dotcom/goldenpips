@@ -335,3 +335,53 @@
 .animate-float-drift {
   animation: float-drift 9s ease-in-out infinite;
 }
+
+/* Unframed market sculpture and restrained landing motion. */
+.landing-page { letter-spacing: 0; }
+.landing-page [class*="tracking-"] { letter-spacing: 0; }
+.landing-hero {
+  background-image: linear-gradient(hsl(var(--border) / 0.24) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.24) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+.market-scene {
+  position: relative;
+  width: min(100%, 1100px);
+  height: 195px;
+  margin: 0 auto;
+  touch-action: pan-y;
+}
+.market-scene canvas { display: block; width: 100%; height: 100%; }
+.market-scene-fallback {
+  height: 100%; display: flex; align-items: center; justify-content: center;
+  color: hsl(var(--primary));
+}
+.market-scene-fallback svg { width: 90px; height: 90px; stroke-width: 1; }
+.hero-entrance { animation: landing-enter 850ms ease-out both; }
+.landing-reveal > div {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 650ms ease, transform 650ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.landing-reveal.is-visible > div { opacity: 1; transform: translateY(0); }
+.landing-page .card-trading { transition-duration: 300ms; }
+.landing-page .card-trading:hover { box-shadow: 0 12px 32px -20px hsl(var(--gold) / 0.35); }
+.market-mini-bar { transform-origin: bottom; animation: market-bar 2.8s ease-in-out infinite alternate; }
+.market-mini-bar:nth-child(2) { animation-delay: -0.6s; }
+.market-mini-bar:nth-child(3) { animation-delay: -1.3s; }
+.market-mini-bar:nth-child(4) { animation-delay: -1.9s; }
+@keyframes landing-enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes market-bar { from { transform: scaleY(0.6); } to { transform: scaleY(1); } }
+@media (min-width: 640px) { .market-scene { height: 210px; } }
+@media (max-height: 700px) and (min-width: 640px) {
+  .landing-hero { padding-top: 12px; padding-bottom: 12px; }
+  .landing-hero h1 { font-size: 40px; }
+  .market-scene { height: 100px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-page *, .landing-page *::before, .landing-page *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .landing-reveal > div { opacity: 1; transform: none; }
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
@@ -19,6 +19,8 @@ import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+
+const LandingMarketScene = lazy(() => import('@/components/LandingMarketScene'));
 
 const features = [
   {
@@ -62,9 +64,11 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 
   return (
     <Card className="card-trading glass-card overflow-hidden transition-all duration-300 hover:border-primary/30">
-      <button
+      <Button
+        variant="ghost"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-5 text-left"
+        aria-expanded={open}
+        className="w-full h-auto whitespace-normal flex items-center justify-between gap-4 p-5 text-left hover:bg-primary/5"
       >
         <span className="font-semibold text-foreground text-sm">{question}</span>
         <ChevronDown
@@ -73,7 +77,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
             open && 'rotate-180'
           )}
         />
-      </button>
+      </Button>
       {open && (
         <div className="px-5 pb-5">
           <p className="text-sm text-muted-foreground leading-relaxed">{answer}</p>
@@ -85,9 +89,27 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const pageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sections = pageRef.current?.querySelectorAll('main > section:not(:first-child)');
+    if (!sections) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.08 });
+    sections.forEach((section) => {
+      section.classList.add('landing-reveal');
+      observer.observe(section);
+    });
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={pageRef} className="landing-page min-h-screen bg-background">
       {/* Ticker tape */}
       <div className="bg-foreground text-background py-1.5 overflow-hidden">
         <div className="ticker-track whitespace-nowrap text-[10px] font-medium tracking-widest uppercase">
@@ -131,26 +153,9 @@ export default function LandingPage() {
 
       <main>
         {/* Hero */}
-        <section className="relative overflow-hidden px-4 pt-14 pb-16">
-          <div className="absolute -top-24 -right-24 w-80 h-80 bg-primary/25 rounded-full blur-[120px] animate-float-drift" />
-          <div className="absolute -bottom-32 -left-20 w-80 h-80 bg-primary/15 rounded-full blur-[120px]" />
-          {/* Subtle chart line & candlestick motifs */}
-          <div className="absolute inset-0 pointer-events-none opacity-[0.05]" aria-hidden="true">
-            <svg className="w-full h-full" viewBox="0 0 1000 600" preserveAspectRatio="none">
-              <path d="M0 470 L140 430 L280 460 L430 340 L560 380 L720 260 L860 300 L1000 180" stroke="hsl(var(--gold))" strokeWidth="2" fill="none" />
-              <path d="M0 560 L160 500 L320 530 L480 420 L640 450 L800 330 L1000 260" stroke="hsl(var(--gold))" strokeWidth="2" fill="none" opacity="0.5" />
-              <g fill="hsl(var(--gold))">
-                <rect x="120" y="90" width="4" height="46" />
-                <rect x="114" y="102" width="16" height="22" />
-                <rect x="190" y="60" width="4" height="60" />
-                <rect x="184" y="74" width="16" height="30" />
-                <rect x="260" y="110" width="4" height="40" />
-                <rect x="254" y="120" width="16" height="20" />
-              </g>
-            </svg>
-          </div>
+        <section className="landing-hero relative overflow-hidden px-4 pt-8 pb-8">
 
-          <div className="relative max-w-3xl mx-auto text-center">
+          <div className="hero-entrance relative max-w-3xl mx-auto text-center">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold uppercase tracking-[0.2em]">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
@@ -159,16 +164,17 @@ export default function LandingPage() {
               Live gold signals
             </span>
 
-            <h1 className="mt-5 text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
-              Trade gold with <span className="text-shimmer-gold">confidence</span>
+            <h1 className="mt-4 text-4xl sm:text-6xl font-extrabold text-foreground leading-tight">
+              Golden<span className="text-shimmer-gold">Pips</span>
             </h1>
+            <p className="mt-2 text-xl sm:text-2xl font-semibold text-foreground">Trade gold with confidence.</p>
 
-            <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
+            <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
               GoldenPips delivers precise <span className="font-bold text-foreground">XAUUSD</span> trading signals with clear entries,
               stop loss and targets — straight to your phone in real time.
             </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button
                 size="lg"
                 onClick={() => navigate('/auth?mode=signup')}
@@ -186,7 +192,14 @@ export default function LandingPage() {
               </Button>
             </div>
 
-            <div className="mt-12 grid grid-cols-3 gap-3 max-w-md mx-auto">
+          </div>
+
+          <Suspense fallback={<div className="market-scene" aria-hidden="true" />}>
+            <LandingMarketScene />
+          </Suspense>
+
+          <div className="relative max-w-3xl mx-auto text-center">
+            <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
               {[
                 { value: 'XAUUSD', label: 'Focused pair', deco: 'bars' },
                 { value: '24/5', label: 'Market cover', deco: 'clock' },
@@ -194,7 +207,7 @@ export default function LandingPage() {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="glass-card rounded-2xl p-3 text-center transition-all duration-300 hover:-translate-y-0.5"
+                  className="p-2 text-center border-r border-border last:border-0 transition-transform duration-300 hover:-translate-y-0.5"
                 >
                   <div className="h-6 flex items-center justify-center">
                     {stat.deco === 'bars' && (
@@ -202,7 +215,7 @@ export default function LandingPage() {
                         {[2, 3.5, 2.5, 4].map((h, i) => (
                           <span
                             key={i}
-                            className="w-1 rounded-sm bg-primary/70"
+                            className="market-mini-bar w-1 rounded-sm bg-primary/70"
                             style={{ height: `${h * 4}px` }}
                           />
                         ))}
@@ -554,7 +567,6 @@ export default function LandingPage() {
               {/* Premium plan */}
               <Card className="card-trading glass-card p-6 border-primary/40 relative overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
                 <div className="absolute top-0 left-0 right-0 h-1 gradient-gold" />
-                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
                 <div className="relative flex flex-col flex-1">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -611,7 +623,6 @@ export default function LandingPage() {
 
         {/* Final CTA */}
         <section className="relative overflow-hidden px-4 py-14 text-center">
-          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-96 h-40 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
           <h2 className="text-2xl font-bold text-foreground">Ready to trade smarter?</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Join GoldenPips and get your next gold signal as it happens.
