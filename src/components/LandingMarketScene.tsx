@@ -26,7 +26,7 @@ export default function LandingMarketScene() {
       host.appendChild(renderer.domElement);
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
-      camera.position.set(0, 0.3, 13);
+      camera.position.set(0, 0.15, 8);
       const token = (name: string) => {
         const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
         return new THREE.Color(`hsl(${value.split(/\s+/).join(',')})`);
@@ -116,7 +116,7 @@ export default function LandingMarketScene() {
         renderer.setSize(width, height);
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
-        const viewWidth = 2 * Math.tan(THREE.MathUtils.degToRad(16)) * 13 * camera.aspect;
+        const viewWidth = 2 * Math.tan(THREE.MathUtils.degToRad(16)) * 8 * camera.aspect;
         sculpture.scale.setScalar(Math.min(1, viewWidth / 10.8));
         render();
       };

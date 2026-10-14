@@ -374,8 +374,9 @@
 @keyframes market-bar { from { transform: scaleY(0.6); } to { transform: scaleY(1); } }
 @media (min-width: 640px) { .market-scene { height: 210px; } }
 @media (max-height: 700px) and (min-width: 640px) {
-  .landing-hero { padding-top: 20px; padding-bottom: 20px; }
-  .market-scene { height: 140px; }
+  .landing-hero { padding-top: 12px; padding-bottom: 12px; }
+  .landing-hero h1 { font-size: 40px; }
+  .market-scene { height: 100px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing-page *, .landing-page *::before, .landing-page *::after {
